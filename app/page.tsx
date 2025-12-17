@@ -1,6 +1,7 @@
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import LakeCard from '../components/LakeCard'
+import DataStatusBanner from '../components/DataStatusBanner'
 import {
   SETTLEMENT_WATER_BODIES,
   getReservoirs,
@@ -20,6 +21,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <Header />
+      <DataStatusBanner />
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-sky-900 to-emerald-900 text-white">

@@ -6,37 +6,113 @@ interface DataExportProps {
   waterBodyName: string
   data: Array<{ t: string; v: number }>
   usgsId: string
+  conservationPool?: number
+  currentLevel?: number
+  poolPercentage?: number | null
+  alertLevel?: string
 }
 
-export default function DataExport({ waterBodyName, data, usgsId }: DataExportProps) {
+export default function DataExport({
+  waterBodyName,
+  data,
+  usgsId,
+  conservationPool,
+  currentLevel,
+  poolPercentage,
+  alertLevel
+}: DataExportProps) {
   const [isOpen, setIsOpen] = useState(false)
 
-  const exportCSV = () => {
-    const csv = [
-      ['Timestamp', 'Value', 'USGS ID', 'Water Body'],
-      ...data.map(d => [
-        new Date(d.t).toISOString(),
-        d.v.toString(),
-        usgsId,
-        waterBodyName
-      ])
-    ].map(row => row.join(',')).join('\n')
+  const calculateStats = () => {
+    if (data.length === 0) return null
+    const values = data.map(d => d.v)
+    return {
+      min: Math.min(...values),
+      max: Math.max(...values),
+      avg: values.reduce((a, b) => a + b, 0) / values.length,
+      count: data.length,
+      first: values[0],
+      last: values[values.length - 1],
+      change: values[values.length - 1] - values[0]
+    }
+  }
 
-    downloadFile(csv, `${waterBodyName.replace(/\s+/g, '_')}_${usgsId}_data.csv`, 'text/csv')
+  const exportCSV = () => {
+    const stats = calculateStats()
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+
+    let csv = '# Choctaw-Chickasaw Water Settlement Portal Data Export\n'
+    csv += `# Water Body: ${waterBodyName}\n`
+    csv += `# USGS Site ID: ${usgsId}\n`
+    csv += `# Export Date: ${new Date().toISOString()}\n`
+    csv += `# Data Points: ${data.length}\n`
+
+    if (stats) {
+      csv += `# Statistics (24h):\n`
+      csv += `#   Minimum: ${stats.min.toFixed(2)}\n`
+      csv += `#   Maximum: ${stats.max.toFixed(2)}\n`
+      csv += `#   Average: ${stats.avg.toFixed(2)}\n`
+      csv += `#   Change: ${stats.change > 0 ? '+' : ''}${stats.change.toFixed(2)}\n`
+    }
+
+    if (conservationPool) {
+      csv += `# Conservation Pool: ${conservationPool} ft\n`
+    }
+    if (currentLevel) {
+      csv += `# Current Level: ${currentLevel.toFixed(2)} ft\n`
+    }
+    if (poolPercentage !== null && poolPercentage !== undefined) {
+      csv += `# Pool Percentage: ${poolPercentage.toFixed(1)}%\n`
+    }
+    if (alertLevel) {
+      csv += `# Alert Level: ${alertLevel.toUpperCase()}\n`
+    }
+
+    csv += '\n'
+    csv += 'Timestamp,Value,USGS_ID,Water_Body\n'
+    csv += data.map(d => [
+      new Date(d.t).toISOString(),
+      d.v.toString(),
+      usgsId,
+      `"${waterBodyName}"`
+    ].join(',')).join('\n')
+
+    downloadFile(csv, `${waterBodyName.replace(/\s+/g, '_')}_${timestamp}.csv`, 'text/csv')
   }
 
   const exportJSON = () => {
+    const stats = calculateStats()
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+
     const json = JSON.stringify({
-      waterBody: waterBodyName,
-      usgsId,
-      exportDate: new Date().toISOString(),
-      dataPoints: data.map(d => ({
+      export: {
+        portal: 'Choctaw-Chickasaw Water Settlement Portal',
+        exportDate: new Date().toISOString(),
+        version: '1.0'
+      },
+      waterBody: {
+        name: waterBodyName,
+        usgsId,
+        conservationPool,
+        currentLevel,
+        poolPercentage,
+        alertLevel
+      },
+      statistics: stats ? {
+        minimum: stats.min,
+        maximum: stats.max,
+        average: stats.avg,
+        change24h: stats.change,
+        dataPoints: stats.count
+      } : null,
+      data: data.map(d => ({
         timestamp: d.t,
-        value: d.v
+        value: d.v,
+        date: new Date(d.t).toISOString()
       }))
     }, null, 2)
 
-    downloadFile(json, `${waterBodyName.replace(/\s+/g, '_')}_${usgsId}_data.json`, 'application/json')
+    downloadFile(json, `${waterBodyName.replace(/\s+/g, '_')}_${timestamp}.json`, 'application/json')
   }
 
   const downloadFile = (content: string, filename: string, type: string) => {
