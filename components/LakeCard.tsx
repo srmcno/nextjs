@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import WaterChart from './WaterChart'
+import DataExport from './DataExport'
 import {
   WaterBody,
   AlertLevel,
@@ -75,6 +76,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
   const [err, setErr] = useState<string | null>(null)
   const [latest, setLatest] = useState<Point | null>(null)
   const [series, setSeries] = useState<Point[]>([])
+  const [dataSource, setDataSource] = useState<'usgs-live' | 'mock-demo' | null>(null)
 
   const { usgsId, parameterCode, conservationPool, streambed, name, type, description, county } = waterBody
   const isRiver = type === 'river'
@@ -96,6 +98,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
 
         try {
           const res = await fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${param}`)
+          const dataSourceHeader = res.headers.get('X-Data-Source') as 'usgs-live' | 'mock-demo' | null
+          setDataSource(dataSourceHeader)
           const json: UsgsJson = await res.json()
 
           const values: UsgsValue[] =
@@ -355,19 +359,26 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
             </div>
 
             {/* Footer Info */}
-            <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500">
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600">USGS real-time</span>
+                {dataSource === 'mock-demo' ? (
+                  <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-800">Demo Data</span>
+                ) : (
+                  <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600">USGS real-time</span>
+                )}
                 <span className="hidden rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600 sm:inline">Agreement guardrails</span>
               </div>
-              <a
-                className="font-semibold text-blue-600 hover:underline"
-                href={`https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                View on USGS →
-              </a>
+              <div className="flex items-center gap-2">
+                <DataExport waterBodyName={name} data={series} usgsId={usgsId} />
+                <a
+                  className="font-semibold text-blue-600 hover:underline"
+                  href={`https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View on USGS →
+                </a>
+              </div>
             </div>
           </>
         )}

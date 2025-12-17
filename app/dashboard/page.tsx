@@ -1,16 +1,18 @@
+'use client'
+
+import { useState } from 'react'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import LakeCard from '../../components/LakeCard'
-import { SETTLEMENT_WATER_BODIES, getReservoirs, getRivers } from '../../lib/waterBodies'
-
-export const metadata = {
-  title: 'Dashboard | Choctaw-Chickasaw Water Settlement Portal',
-  description: 'Real-time water level monitoring for all water bodies covered by the Choctaw-Chickasaw Water Settlement Agreement.'
-}
+import SearchFilter from '../../components/SearchFilter'
+import { SETTLEMENT_WATER_BODIES, getReservoirs, getRivers, WaterBody } from '../../lib/waterBodies'
 
 export default function DashboardPage() {
-  const reservoirs = getReservoirs()
-  const rivers = getRivers()
+  const allWaterBodies = SETTLEMENT_WATER_BODIES
+  const [filteredWaterBodies, setFilteredWaterBodies] = useState<WaterBody[]>(allWaterBodies)
+
+  const reservoirs = filteredWaterBodies.filter(wb => wb.type === 'reservoir')
+  const rivers = filteredWaterBodies.filter(wb => wb.type === 'river')
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -70,8 +72,23 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8">
+        {/* Search and Filter */}
+        <SearchFilter
+          waterBodies={allWaterBodies}
+          onFilterChange={setFilteredWaterBodies}
+        />
+
+        {/* Results Summary */}
+        <div className="mb-6 text-sm text-slate-600">
+          Showing <span className="font-semibold text-slate-900">{filteredWaterBodies.length}</span> of {allWaterBodies.length} water bodies
+          {filteredWaterBodies.length !== allWaterBodies.length && (
+            <span className="ml-2 text-emerald-700">(filtered)</span>
+          )}
+        </div>
+
         {/* Critical Settlement Reservoirs */}
-        <section className="mb-12">
+        {reservoirs.length > 0 && (
+          <section className="mb-12">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Settlement Reservoirs</h2>
             <p className="mt-1 text-gray-600">
@@ -83,10 +100,12 @@ export default function DashboardPage() {
               <LakeCard key={waterBody.id} waterBody={waterBody} />
             ))}
           </div>
-        </section>
+          </section>
+        )}
 
         {/* River Monitoring */}
-        <section className="mb-12">
+        {rivers.length > 0 && (
+          <section className="mb-12">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900">River Flow Monitoring</h2>
             <p className="mt-1 text-gray-600">
@@ -98,7 +117,19 @@ export default function DashboardPage() {
               <LakeCard key={waterBody.id} waterBody={waterBody} />
             ))}
           </div>
-        </section>
+          </section>
+        )}
+
+        {/* No Results */}
+        {filteredWaterBodies.length === 0 && (
+          <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+            <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="mt-4 text-lg font-semibold text-slate-900">No water bodies found</h3>
+            <p className="mt-2 text-sm text-slate-600">Try adjusting your search or filter criteria</p>
+          </div>
+        )}
 
         {/* Info Section */}
         <section className="rounded-2xl bg-gray-100 p-6">
