@@ -1,0 +1,10 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="80" cy="80" r="76" fill="#8B0000" stroke="#D4AF37" stroke-width="8"/>
+  <circle cx="80" cy="80" r="56" fill="#FDF5E6" stroke="#D4AF37" stroke-width="6"/>
+  <path d="M80 32L96 64H64L80 32Z" fill="#D4AF37"/>
+  <path d="M80 128L64 96H96L80 128Z" fill="#D4AF37"/>
+  <path d="M32 80L64 64V96L32 80Z" fill="#D4AF37"/>
+  <path d="M128 80L96 96V64L128 80Z" fill="#D4AF37"/>
+  <circle cx="80" cy="80" r="18" fill="#8B0000" stroke="#D4AF37" stroke-width="4"/>
+  <text x="80" y="86" text-anchor="middle" font-family="'Inter', 'Arial', sans-serif" font-size="14" font-weight="700" fill="#FDF5E6">CNO</text>
+</svg>
