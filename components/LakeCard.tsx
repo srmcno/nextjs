@@ -80,8 +80,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
     setErr(null)
 
     const paramsToTry = waterBody.type === 'river'
-      ? [parameterCode, '00060']
-      : [parameterCode, '62614', '00065']
+      ? [...new Set([parameterCode, '00060'])]
+      : [...new Set([parameterCode, '62614', '00065'])]
 
     const load = async () => {
       let lastError: string | null = null
