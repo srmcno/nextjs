@@ -74,7 +74,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     id: 'sardis',
     name: 'Sardis Lake',
     type: 'reservoir',
-    usgsId: '07335790',
+    usgsId: '07335775',
     conservationPool: 599,
     floodPoolTop: 607,
     streambed: 530,

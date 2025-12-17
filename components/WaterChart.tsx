@@ -117,13 +117,13 @@ export default function WaterChart({
           label: 'Watch',
           y1: streambed + ((threshold - streambed) * ALERT_THRESHOLDS.watch) / 100,
           y2: streambed + ((threshold - streambed) * ALERT_THRESHOLDS.normal) / 100,
-          color: 'rgba(234,179,8,0.08)'
+          color: 'rgba(14,165,233,0.08)'
         },
         {
           label: 'Warning',
           y1: streambed + ((threshold - streambed) * ALERT_THRESHOLDS.warning) / 100,
           y2: streambed + ((threshold - streambed) * ALERT_THRESHOLDS.watch) / 100,
-          color: 'rgba(249,115,22,0.08)'
+          color: 'rgba(100,116,139,0.10)'
         },
         {
           label: 'Critical',
@@ -213,9 +213,9 @@ export default function WaterChart({
             <ReferenceLine
               key={`${line.label}-${line.value}`}
               y={line.value}
-              stroke={line.color ?? '#f97316'}
+              stroke={line.color ?? '#0284c7'}
               strokeDasharray="2 2"
-              label={{ value: line.label, position: 'insideRight', fill: line.color ?? '#c2410c', fontSize: 10 }}
+              label={{ value: line.label, position: 'insideRight', fill: line.color ?? '#0369a1', fontSize: 10 }}
             />
           ))}
 

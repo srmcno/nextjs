@@ -17,7 +17,7 @@ export default function DashboardPage() {
       <Header />
 
       {/* Header Section */}
-      <section className="bg-gradient-to-br from-[#8B0000] via-[#6B0000] to-[#4A0000] text-white">
+      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-sky-900 text-white">
         <div className="mx-auto max-w-7xl px-4 py-12">
           <h1 className="text-3xl font-extrabold md:text-4xl">
             Live Water Conditions Dashboard
@@ -53,11 +53,11 @@ export default function DashboardPage() {
               <span className="text-gray-600">Normal (≥95%)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-yellow-500"></span>
+              <span className="h-3 w-3 rounded-full bg-sky-500"></span>
               <span className="text-gray-600">Watch (85-95%)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-orange-500"></span>
+              <span className="h-3 w-3 rounded-full bg-slate-500"></span>
               <span className="text-gray-600">Warning (75-85%)</span>
             </div>
             <div className="flex items-center gap-2">

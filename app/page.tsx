@@ -72,12 +72,14 @@ export default function Home() {
                   What the colors mean
                 </summary>
                 <div className="mt-3 space-y-2 text-sm leading-relaxed text-slate-100/90">
-                  <p className="font-semibold text-emerald-100">Emerald</p>
-                  <p>Within normal pool or flow bands.</p>
-                  <p className="font-semibold text-sky-100">Sky</p>
-                  <p>Watch conditions approaching guardrails.</p>
-                  <p className="font-semibold text-slate-200">Slate</p>
-                  <p>Critical levels where withdrawals halt and ecological protections kick in.</p>
+                  <p className="font-semibold text-emerald-300">Green (Normal)</p>
+                  <p>Within normal pool or flow bands (≥95%).</p>
+                  <p className="font-semibold text-sky-300">Blue (Watch)</p>
+                  <p>Watch conditions approaching guardrails (85-95%).</p>
+                  <p className="font-semibold text-slate-300">Gray (Warning)</p>
+                  <p>Below normal range requiring attention (75-85%).</p>
+                  <p className="font-semibold text-red-300">Red (Critical)</p>
+                  <p>Critical levels where withdrawals halt (&lt;75%).</p>
                 </div>
               </details>
             </div>
