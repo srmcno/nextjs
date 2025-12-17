@@ -13,7 +13,7 @@ export default function SettlementPage() {
       <Header />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-[#8B0000] via-[#6B0000] to-[#4A0000] text-white">
+      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-sky-900 text-white">
         <div className="mx-auto max-w-5xl px-4 py-16">
           <h1 className="text-4xl font-extrabold md:text-5xl">
             Water Settlement Agreement
@@ -81,9 +81,9 @@ export default function SettlementPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-orange-200 bg-orange-50 p-6 shadow-sm">
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 p-6 shadow-sm">
               <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-orange-700 text-sm font-bold">2</span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700 text-sm font-bold">2</span>
                 Sardis Lake Withdrawal Restrictions
               </h3>
               <p className="mt-3 text-gray-700 leading-relaxed">
@@ -101,7 +101,7 @@ export default function SettlementPage() {
                   </div>
                   <div>
                     <div className="text-xs text-gray-500">Min. for OKC Withdrawal</div>
-                    <div className="text-xl font-bold text-yellow-600">{SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal} ft</div>
+                    <div className="text-xl font-bold text-sky-600">{SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal} ft</div>
                   </div>
                   <div>
                     <div className="text-xs text-gray-500">Critical Level</div>
@@ -148,15 +148,15 @@ export default function SettlementPage() {
               <div className="mt-1 text-2xl font-bold text-emerald-600">≥{ALERT_THRESHOLDS.normal}%</div>
               <div className="mt-1 text-xs text-emerald-700">At or above conservation pool</div>
             </div>
-            <div className="rounded-xl border-2 border-yellow-300 bg-yellow-50 p-4">
-              <div className="text-sm font-semibold text-yellow-800">Watch</div>
-              <div className="mt-1 text-2xl font-bold text-yellow-600">{ALERT_THRESHOLDS.watch}-{ALERT_THRESHOLDS.normal}%</div>
-              <div className="mt-1 text-xs text-yellow-700">Slightly below normal</div>
+            <div className="rounded-xl border-2 border-sky-300 bg-sky-50 p-4">
+              <div className="text-sm font-semibold text-sky-800">Watch</div>
+              <div className="mt-1 text-2xl font-bold text-sky-600">{ALERT_THRESHOLDS.watch}-{ALERT_THRESHOLDS.normal}%</div>
+              <div className="mt-1 text-xs text-sky-700">Slightly below normal</div>
             </div>
-            <div className="rounded-xl border-2 border-orange-300 bg-orange-50 p-4">
-              <div className="text-sm font-semibold text-orange-800">Warning</div>
-              <div className="mt-1 text-2xl font-bold text-orange-600">{ALERT_THRESHOLDS.warning}-{ALERT_THRESHOLDS.watch}%</div>
-              <div className="mt-1 text-xs text-orange-700">Below normal range</div>
+            <div className="rounded-xl border-2 border-slate-300 bg-slate-100 p-4">
+              <div className="text-sm font-semibold text-slate-800">Warning</div>
+              <div className="mt-1 text-2xl font-bold text-slate-600">{ALERT_THRESHOLDS.warning}-{ALERT_THRESHOLDS.watch}%</div>
+              <div className="mt-1 text-xs text-slate-700">Below normal range</div>
             </div>
             <div className="rounded-xl border-2 border-red-400 bg-red-50 p-4">
               <div className="text-sm font-semibold text-red-800">Critical</div>
@@ -204,7 +204,7 @@ export default function SettlementPage() {
             ].map((item, idx) => (
               <div key={idx} className="flex gap-4">
                 <div className="flex-shrink-0">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#8B0000] text-sm font-bold text-white">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-800 text-sm font-bold text-white">
                     {item.year}
                   </div>
                 </div>
@@ -273,14 +273,14 @@ export default function SettlementPage() {
 
         {/* CTA */}
         <section>
-          <div className="rounded-2xl bg-gradient-to-br from-[#8B0000] to-[#4A0000] p-8 text-white">
+          <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-sky-900 p-8 text-white">
             <h2 className="text-2xl font-bold">View Live Water Conditions</h2>
             <p className="mt-2 text-white/90">
               Monitor real-time water levels for all settlement water bodies using official USGS data.
             </p>
             <a
               href="/"
-              className="mt-6 inline-block rounded-xl bg-white px-6 py-3 font-semibold text-[#8B0000] shadow-lg transition-transform hover:scale-105"
+              className="mt-6 inline-block rounded-xl bg-white px-6 py-3 font-semibold text-slate-900 shadow-lg transition-transform hover:scale-105"
             >
               Go to Dashboard
             </a>

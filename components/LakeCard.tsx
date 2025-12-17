@@ -54,14 +54,14 @@ const ALERT_STYLES: Record<AlertLevel, { badge: string; bg: string; border: stri
     border: 'border-slate-200'
   },
   watch: {
-    badge: 'bg-yellow-100 text-yellow-800',
-    bg: 'bg-yellow-50/40',
-    border: 'border-yellow-200'
+    badge: 'bg-sky-100 text-sky-800',
+    bg: 'bg-sky-50/40',
+    border: 'border-sky-200'
   },
   warning: {
-    badge: 'bg-orange-100 text-orange-800',
-    bg: 'bg-orange-50/40',
-    border: 'border-orange-200'
+    badge: 'bg-slate-200 text-slate-800',
+    bg: 'bg-slate-50/60',
+    border: 'border-slate-300'
   },
   critical: {
     badge: 'bg-red-100 text-red-800',
@@ -178,7 +178,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
       ? [{
           value: SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal,
           label: 'OKC withdrawal floor',
-          color: '#f97316'
+          color: '#0284c7'
         }]
       : undefined
 
@@ -219,8 +219,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
       {alertMessage && (
         <div className={`mx-5 mb-3 rounded-lg px-3 py-2 text-sm font-medium ${
           alertLevel === 'critical' ? 'bg-red-100 text-red-900' :
-          alertLevel === 'warning' ? 'bg-orange-100 text-orange-900' :
-          'bg-yellow-100 text-yellow-900'
+          alertLevel === 'warning' ? 'bg-slate-200 text-slate-900' :
+          'bg-sky-100 text-sky-900'
         }`}>
           {alertMessage}
         </div>
@@ -290,8 +290,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
                   <span className="font-medium text-gray-600">Pool Level</span>
                   <span className={`font-bold ${
                     poolPercentage >= 95 ? 'text-emerald-700' :
-                    poolPercentage >= 85 ? 'text-yellow-700' :
-                    poolPercentage >= 75 ? 'text-orange-700' :
+                    poolPercentage >= 85 ? 'text-sky-700' :
+                    poolPercentage >= 75 ? 'text-slate-700' :
                     'text-red-700'
                   }`}>
                     {poolPercentage.toFixed(1)}%
@@ -301,8 +301,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
                   <div
                     className={`h-full rounded-full transition-all ${
                       poolPercentage >= 95 ? 'bg-emerald-500' :
-                      poolPercentage >= 85 ? 'bg-yellow-500' :
-                      poolPercentage >= 75 ? 'bg-orange-500' :
+                      poolPercentage >= 85 ? 'bg-sky-500' :
+                      poolPercentage >= 75 ? 'bg-slate-500' :
                       'bg-red-500'
                     }`}
                     style={{ width: `${Math.min(100, poolPercentage)}%` }}
@@ -317,9 +317,9 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
 
             {/* Settlement guardrail */}
             {!isRiver && (
-              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
-                <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide">
-                  <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-600 text-[10px] text-white">!</span>
+              <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-relaxed text-slate-700">
+                <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-sky-800">
+                  <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-sky-600 text-[10px] text-white">!</span>
                   Settlement guardrails
                 </div>
                 {waterBody.id === 'sardis' ? (
@@ -360,7 +360,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
                 <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600">USGS real-time</span>
                 <span className="hidden rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600 sm:inline">Agreement guardrails</span>
               </div>
-              
+              <a
                 className="font-semibold text-blue-600 hover:underline"
                 href={`https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
                 target="_blank"
