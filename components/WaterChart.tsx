@@ -91,13 +91,11 @@ export default function WaterChart({
     )
   }
 
-  // Calculate domain with some padding
   const values = data.map(d => d.v)
   const min = Math.min(...values)
   const max = Math.max(...values)
   const padding = (max - min) * 0.1 || 1
 
-  // Include threshold in domain calculation if present
   let domainMin = min - padding
   let domainMax = max + padding
 
@@ -119,19 +117,19 @@ export default function WaterChart({
           label: 'Watch',
           y1: streambed + ((threshold - streambed) * ALERT_THRESHOLDS.watch) / 100,
           y2: streambed + ((threshold - streambed) * ALERT_THRESHOLDS.normal) / 100,
-          color: 'rgba(56,189,248,0.08)'
+          color: 'rgba(234,179,8,0.08)'
         },
         {
           label: 'Warning',
           y1: streambed + ((threshold - streambed) * ALERT_THRESHOLDS.warning) / 100,
           y2: streambed + ((threshold - streambed) * ALERT_THRESHOLDS.watch) / 100,
-          color: 'rgba(34,211,238,0.08)'
+          color: 'rgba(249,115,22,0.08)'
         },
         {
           label: 'Critical',
           y1: streambed,
           y2: streambed + ((threshold - streambed) * ALERT_THRESHOLDS.warning) / 100,
-          color: 'rgba(71,85,105,0.12)'
+          color: 'rgba(239,68,68,0.08)'
         }
       ]
     : []
@@ -215,9 +213,9 @@ export default function WaterChart({
             <ReferenceLine
               key={`${line.label}-${line.value}`}
               y={line.value}
-              stroke={line.color ?? '#0ea5e9'}
+              stroke={line.color ?? '#f97316'}
               strokeDasharray="2 2"
-              label={{ value: line.label, position: 'insideRight', fill: line.color ?? '#0369a1', fontSize: 10 }}
+              label={{ value: line.label, position: 'insideRight', fill: line.color ?? '#c2410c', fontSize: 10 }}
             />
           ))}
 
