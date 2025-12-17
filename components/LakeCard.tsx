@@ -145,24 +145,46 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
     return { label: labels[alertLevel], cls: styles.badge }
   }, [latest, loading, alertLevel, styles.badge])
 
+  const sardisLine =
+    waterBody.id === 'sardis'
+      ? [{
+          value: SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal,
+          label: 'OKC withdrawal floor',
+          color: '#dc2626'
+        }]
+      : undefined
+
   return (
-    <div className={`rounded-2xl border-2 ${styles.border} ${styles.bg} shadow-sm transition-all hover:shadow-md`}>
+    <div className={`rounded-2xl border-2 ${styles.border} ${styles.bg} shadow-sm transition-all hover:shadow-lg`}>
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 p-5 pb-3">
+      <div className="flex items-start justify-between gap-3 p-5 pb-2">
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="text-lg">
               {isRiver ? '🌊' : '💧'}
             </span>
-            <h3 className="text-lg font-bold text-gray-900">{name}</h3>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">{name}</h3>
+              <div className="flex flex-wrap gap-2 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                <span className="rounded-md bg-gray-100 px-2 py-0.5">USGS Station {usgsId}</span>
+                {waterBody.isSettlementCritical && (
+                  <span className="rounded-md bg-[#8B0000]/10 px-2 py-0.5 text-[#6B0000]">Settlement critical</span>
+                )}
+              </div>
+            </div>
           </div>
           <div className="mt-1 text-sm text-gray-500">
             {county} County
           </div>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadge.cls}`}>
-          {statusBadge.label}
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadge.cls}`}>
+            {statusBadge.label}
+          </span>
+          {sardisRestricted && (
+            <span className="rounded-full bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-700">Withdrawal hold</span>
+          )}
+        </div>
       </div>
 
       {/* Alert Banner */}
@@ -205,28 +227,32 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
             {/* Current Reading */}
             <div className="mb-4 grid grid-cols-2 gap-4">
               <div>
-                <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                   {isRiver ? 'Current Flow' : 'Current Level'}
                 </div>
-                <div className="mt-1 text-3xl font-bold text-gray-900">
+                <div className="mt-1 text-3xl font-extrabold text-gray-900">
                   {latest ? latest.v.toFixed(2) : '—'}
                   <span className="ml-1 text-base font-semibold text-gray-500">
                     {isRiver ? 'cfs' : 'ft'}
                   </span>
                 </div>
+                <div className="mt-1 text-xs text-gray-500">Updated {latest ? fmtTime(latest.t) : '—'}</div>
               </div>
 
-              {conservationPool && !isRiver && (
-                <div>
-                  <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Conservation Pool
+              <div className="flex flex-col gap-2 text-xs text-gray-600">
+                {conservationPool && !isRiver && (
+                  <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Conservation pool</div>
+                    <div className="text-lg font-bold text-emerald-900">{conservationPool.toFixed(1)} ft</div>
                   </div>
-                  <div className="mt-1 text-3xl font-bold text-gray-900">
-                    {conservationPool.toFixed(1)}
-                    <span className="ml-1 text-base font-semibold text-gray-500">ft</span>
+                )}
+                {streambed !== undefined && !isRiver && (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Streambed datum</div>
+                    <div className="text-base font-semibold text-slate-800">{streambed.toFixed(1)} ft</div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Pool Level Progress Bar */}
@@ -261,19 +287,51 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
               </div>
             )}
 
+            {/* Settlement guardrail */}
+            {!isRiver && (
+              <div className="mb-4 rounded-lg border border-[#8B0000]/30 bg-[#8B0000]/5 p-3 text-xs leading-relaxed text-[#3d0f0f]">
+                <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide">
+                  <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#8B0000] text-[10px] text-white">!
+                  </span>
+                  Settlement guardrails
+                </div>
+                {waterBody.id === 'sardis' ? (
+                  <p>
+                    Oklahoma City withdrawals pause when Sardis falls below {SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal} ft,
+                    and recreation/wildlife protections trigger heightened alerts below {SARDIS_WITHDRAWAL_THRESHOLDS.criticalLevel} ft.
+                  </p>
+                ) : (
+                  <p>
+                    Pools are compared to conservation storage; alerts follow the settlement tiers (watch, warning, critical) set off of the pool percentage bands.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Chart */}
-            <div className="rounded-xl bg-gray-50 p-3">
+            <div className="rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 shadow-inner">
+              <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                <span>{isRiver ? 'Realtime discharge trace' : 'Pool elevation trace'}</span>
+                <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                  <span className="flex items-center gap-1"><span className="h-1.5 w-4 rounded-full bg-slate-900"></span> USGS</span>
+                  {!isRiver && <span className="flex items-center gap-1"><span className="h-1.5 w-4 rounded-full bg-emerald-500"></span> Settlement Pool</span>}
+                </div>
+              </div>
               <WaterChart
                 data={series.slice(-96)}
                 threshold={!isRiver ? conservationPool : undefined}
                 isFlow={isRiver}
+                streambed={!isRiver ? streambed : undefined}
+                floodPoolTop={!isRiver ? waterBody.floodPoolTop : undefined}
+                alertLines={sardisLine}
               />
             </div>
 
             {/* Footer Info */}
             <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-              <div>
-                Updated: {latest ? fmtTime(latest.t) : '—'}
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600">USGS real-time</span>
+                <span className="hidden rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600 sm:inline">Agreement guardrails</span>
               </div>
               <a
                 className="font-semibold text-blue-600 hover:underline"
