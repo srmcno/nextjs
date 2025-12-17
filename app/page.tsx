@@ -1,36 +1,39 @@
+import Header from '../components/Header'
+import Footer from '../components/Footer'
+import Link from 'next/link'
+
 export default function Home() {
   return (
-    <main style={{ padding: 24, fontFamily: 'system-ui' }}>
-      <h1 style={{ fontSize: 30, fontWeight: 700 }}>
-        Choctaw–Chickasaw Water Settlement Portal
-      </h1>
+    <>
+      <Header />
 
-      <p style={{ marginTop: 12, maxWidth: 800 }}>
-        This site provides live, transparent water-level information for lakes
-        and reservoirs governed by the Choctaw–Chickasaw–Oklahoma City Water
-        Settlement Agreement. All measurements are sourced directly from the
-        United States Geological Survey (USGS).
-      </p>
+      <main style={{ padding: 24 }}>
+        <h1 style={{ fontSize: 32 }}>
+          Water. Sovereignty. Transparency.
+        </h1>
 
-      <h2 style={{ marginTop: 28, fontSize: 22 }}>
-        Lake Texoma — Live USGS Water Level
-      </h2>
+        <p style={{ maxWidth: 720, marginTop: 12 }}>
+          Live water level data and public information supporting the
+          Choctaw–Chickasaw–Oklahoma City Water Settlement Agreement.
+        </p>
 
-      <iframe
-        src="https://waterdata.usgs.gov/monitoring-location/07331500/"
-        width="100%"
-        height="600"
-        style={{
-          border: '1px solid #ccc',
-          marginTop: 12,
-          borderRadius: 8
-        }}
-      />
+        <Link href="/dashboard">
+          <button
+            style={{
+              marginTop: 24,
+              padding: '12px 20px',
+              background: '#7A0019',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6
+            }}
+          >
+            View Live Water Levels
+          </button>
+        </Link>
+      </main>
 
-      <p style={{ marginTop: 12, fontSize: 14 }}>
-        Data source: USGS (official federal monitoring)
-      </p>
-    </main>
+      <Footer />
+    </>
   )
 }
-
