@@ -1,35 +1,33 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import WaterChart from './WaterChart'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts'
 
-export default function LakeCard({ name, site }: any) {
-  const [data, setData] = useState([])
+type Point = { t: string; v: number }
 
-  useEffect(() => {
-    fetch(`/api/usgs?site=${site}`)
-      .then(res => res.json())
-      .then(json => {
-        const points =
-          json.value.timeSeries[0]?.values[0]?.value.map((v: any) => ({
-            time: v.dateTime,
-            level: Number(v.value)
-          })) || []
-        setData(points)
-      })
-  }, [site])
-
+export default function WaterChart({ data }: { data: Point[] }) {
   return (
-    <div
-      style={{
-        background: 'white',
-        padding: 16,
-        borderRadius: 8,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-      }}
-    >
-      <h3>{name}</h3>
-      <WaterChart data={data} />
+    <div className="h-44 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <XAxis dataKey="t" hide />
+          <YAxis width={40} tick={{ fontSize: 12 }} />
+          <Tooltip />
+          <Line
+            type="monotone"
+            dataKey="v"
+            stroke="#1E4F91"
+            strokeWidth={2}
+            dot={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   )
 }
