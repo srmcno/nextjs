@@ -82,11 +82,12 @@ function generateRiverFlowData(
 
 // Mock data for each water body with realistic patterns
 export const MOCK_WATER_DATA: Record<string, { parameterCode: string; data: MockDataPoint[] }> = {
+  // === SETTLEMENT WATER BODIES ===
   '07335775': { // Sardis Lake - Conservation pool 599, currently in watch zone
     parameterCode: '62614',
     data: generateMockData(592.5, 0.6, 96, 'falling', 2.0) // Falling trend, approaching OKC withdrawal threshold
   },
-  '07333900': { // McGee Creek - Near conservation pool
+  '07333900': { // McGee Creek - Near conservation pool (also part of OKC system)
     parameterCode: '62614',
     data: generateMockData(574.5, 0.8, 96, 'stable', 0.5)
   },
@@ -110,7 +111,7 @@ export const MOCK_WATER_DATA: Record<string, { parameterCode: string; data: Mock
     parameterCode: '62614',
     data: generateMockData(472.3, 0.6, 96, 'falling', 0.5)
   },
-  '07334200': { // Atoka - Near conservation pool
+  '07334200': { // Atoka - Near conservation pool (part of OKC system)
     parameterCode: '00065',
     data: generateMockData(580.8, 0.5, 96, 'stable', 0.3)
   },
@@ -121,6 +122,27 @@ export const MOCK_WATER_DATA: Record<string, { parameterCode: string; data: Mock
   '07336200': { // Kiamichi River Antlers - Moderate flow
     parameterCode: '00060',
     data: generateRiverFlowData(165, 25)
+  },
+
+  // === OKC RESERVOIR SYSTEM (for combined storage calculations) ===
+  // Note: Canton, Draper, Hefner, and Overholser don't have real USGS site IDs in settlement docs
+  // These are simulated for the combined storage calculations per Exhibit 13
+
+  'okc-canton': { // Canton Lake - OKC system
+    parameterCode: '00065',
+    data: generateMockData(1608.2, 1.2, 96, 'stable', 0.2) // ~72% of capacity
+  },
+  'okc-draper': { // Stanley Draper Lake - OKC system
+    parameterCode: '00065',
+    data: generateMockData(1182.5, 0.8, 96, 'falling', 0.5) // ~81% of capacity
+  },
+  'okc-hefner': { // Lake Hefner - OKC system
+    parameterCode: '00065',
+    data: generateMockData(1194.3, 0.6, 96, 'stable', 0.3) // ~86% of capacity
+  },
+  'okc-overholser': { // Lake Overholser - OKC system
+    parameterCode: '00065',
+    data: generateMockData(1237.8, 0.4, 96, 'stable', 0.1) // ~62% of capacity
   }
 }
 
