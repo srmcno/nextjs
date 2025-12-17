@@ -91,13 +91,11 @@ export default function WaterChart({
     )
   }
 
-  // Calculate domain with some padding
   const values = data.map(d => d.v)
   const min = Math.min(...values)
   const max = Math.max(...values)
   const padding = (max - min) * 0.1 || 1
 
-  // Include threshold in domain calculation if present
   let domainMin = min - padding
   let domainMax = max + padding
 

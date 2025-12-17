@@ -1,18 +1,22 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import WaterChart from './WaterChart'
 import {
-  type WaterBody,
-  type AlertLevel,
+  WaterBody,
+  AlertLevel,
   getAlertLevel,
   calculatePoolPercentage,
   getAlertMessage,
   SARDIS_WITHDRAWAL_THRESHOLDS
 } from '../lib/waterBodies'
 
-type UsgsValue = { value: string; dateTime: string }
-type UsgsJson = {
+interface UsgsValue {
+  dateTime: string
+  value: string
+}
+
+interface UsgsJson {
   value?: {
     timeSeries?: Array<{
       values?: Array<{
@@ -21,6 +25,7 @@ type UsgsJson = {
     }>
   }
 }
+
 type Point = { t: string; v: number }
 
 function fmtTime(iso: string) {
@@ -46,22 +51,22 @@ const ALERT_STYLES: Record<AlertLevel, { badge: string; bg: string; border: stri
   normal: {
     badge: 'bg-emerald-100 text-emerald-800',
     bg: 'bg-white',
-    border: 'border-black/10'
+    border: 'border-slate-200'
   },
   watch: {
     badge: 'bg-yellow-100 text-yellow-800',
-    bg: 'bg-yellow-50/30',
-    border: 'border-yellow-300'
+    bg: 'bg-yellow-50/40',
+    border: 'border-yellow-200'
   },
   warning: {
     badge: 'bg-orange-100 text-orange-800',
-    bg: 'bg-orange-50/30',
-    border: 'border-orange-300'
+    bg: 'bg-orange-50/40',
+    border: 'border-orange-200'
   },
   critical: {
     badge: 'bg-red-100 text-red-800',
-    bg: 'bg-red-50/30',
-    border: 'border-red-400'
+    bg: 'bg-red-50/60',
+    border: 'border-red-300'
   }
 }
 
@@ -79,35 +84,58 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
     setLoading(true)
     setErr(null)
 
-    fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${parameterCode}`)
-      .then(r => r.json())
-      .then((json: UsgsJson) => {
-        if (cancelled) return
+    const paramsToTry = waterBody.type === 'river'
+      ? [parameterCode, '00060']
+      : [parameterCode, '62614', '00065']
 
-        const values: UsgsValue[] =
-          json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []
+    const load = async () => {
+      let lastError: string | null = null
 
-        const pts = values
-          .map(v => ({ t: v.dateTime, v: Number(v.value) }))
-          .filter(p => Number.isFinite(p.v))
+      for (const param of paramsToTry) {
+        if (!param) continue
 
-        setSeries(pts)
+        try {
+          const res = await fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${param}`)
+          const json: UsgsJson = await res.json()
 
-        const last = pts[pts.length - 1]
-        setLatest(last ? { v: last.v, t: last.t } : null)
+          const values: UsgsValue[] =
+            json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []
 
+          const pts = values
+            .map(v => ({ t: v.dateTime, v: Number(v.value) }))
+            .filter(p => Number.isFinite(p.v))
+
+          if (pts.length === 0) {
+            lastError = `No recent observations for parameter ${param}`
+            continue
+          }
+
+          if (cancelled) return
+
+          setSeries(pts)
+          const last = pts[pts.length - 1]
+          setLatest(last ? { v: last.v, t: last.t } : null)
+          setLoading(false)
+          return
+        } catch {
+          lastError = 'Failed to load USGS data'
+        }
+      }
+
+      if (!cancelled) {
+        setErr(lastError || 'Unable to load data')
+        setSeries([])
+        setLatest(null)
         setLoading(false)
-      })
-      .catch(() => {
-        if (cancelled) return
-        setErr('Failed to load USGS data')
-        setLoading(false)
-      })
+      }
+    }
+
+    void load()
 
     return () => {
       cancelled = true
     }
-  }, [usgsId, parameterCode])
+  }, [usgsId, parameterCode, waterBody.type])
 
   const alertLevel = useMemo((): AlertLevel => {
     if (!latest || !conservationPool) return 'normal'
@@ -150,7 +178,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
       ? [{
           value: SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal,
           label: 'OKC withdrawal floor',
-          color: '#dc2626'
+          color: '#f97316'
         }]
       : undefined
 
@@ -168,7 +196,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
               <div className="flex flex-wrap gap-2 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                 <span className="rounded-md bg-gray-100 px-2 py-0.5">USGS Station {usgsId}</span>
                 {waterBody.isSettlementCritical && (
-                  <span className="rounded-md bg-[#8B0000]/10 px-2 py-0.5 text-[#6B0000]">Settlement critical</span>
+                  <span className="rounded-md bg-slate-900/10 px-2 py-0.5 text-slate-800">Settlement critical</span>
                 )}
               </div>
             </div>
@@ -182,7 +210,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
             {statusBadge.label}
           </span>
           {sardisRestricted && (
-            <span className="rounded-full bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-700">Withdrawal hold</span>
+            <span className="rounded-full bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-800">Withdrawal hold</span>
           )}
         </div>
       </div>
@@ -190,9 +218,9 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
       {/* Alert Banner */}
       {alertMessage && (
         <div className={`mx-5 mb-3 rounded-lg px-3 py-2 text-sm font-medium ${
-          alertLevel === 'critical' ? 'bg-red-100 text-red-800' :
-          alertLevel === 'warning' ? 'bg-orange-100 text-orange-800' :
-          'bg-yellow-100 text-yellow-800'
+          alertLevel === 'critical' ? 'bg-red-100 text-red-900' :
+          alertLevel === 'warning' ? 'bg-orange-100 text-orange-900' :
+          'bg-yellow-100 text-yellow-900'
         }`}>
           {alertMessage}
         </div>
@@ -200,7 +228,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
 
       {/* Sardis Special Banner */}
       {sardisRestricted && (
-        <div className="mx-5 mb-3 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white">
+        <div className="mx-5 mb-3 rounded-lg bg-red-700 px-3 py-2 text-sm font-bold text-white">
           ⚠️ OKC WITHDRAWAL RESTRICTED per Settlement Agreement
         </div>
       )}
@@ -261,10 +289,10 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
                 <div className="mb-1 flex items-center justify-between text-xs">
                   <span className="font-medium text-gray-600">Pool Level</span>
                   <span className={`font-bold ${
-                    poolPercentage >= 95 ? 'text-emerald-600' :
-                    poolPercentage >= 85 ? 'text-yellow-600' :
-                    poolPercentage >= 75 ? 'text-orange-600' :
-                    'text-red-600'
+                    poolPercentage >= 95 ? 'text-emerald-700' :
+                    poolPercentage >= 85 ? 'text-yellow-700' :
+                    poolPercentage >= 75 ? 'text-orange-700' :
+                    'text-red-700'
                   }`}>
                     {poolPercentage.toFixed(1)}%
                   </span>
@@ -289,10 +317,9 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
 
             {/* Settlement guardrail */}
             {!isRiver && (
-              <div className="mb-4 rounded-lg border border-[#8B0000]/30 bg-[#8B0000]/5 p-3 text-xs leading-relaxed text-[#3d0f0f]">
+              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
                 <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide">
-                  <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#8B0000] text-[10px] text-white">!
-                  </span>
+                  <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-600 text-[10px] text-white">!</span>
                   Settlement guardrails
                 </div>
                 {waterBody.id === 'sardis' ? (
@@ -333,7 +360,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
                 <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600">USGS real-time</span>
                 <span className="hidden rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600 sm:inline">Agreement guardrails</span>
               </div>
-              <a
+              
                 className="font-semibold text-blue-600 hover:underline"
                 href={`https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
                 target="_blank"
