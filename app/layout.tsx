@@ -1,9 +1,12 @@
-import Header from '../components/Header'
-import Footer from '../components/Footer'
+import './globals.css'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 
-export const metadata = {
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
   title: 'Water Settlement Portal',
-  description: 'Choctaw–Chickasaw Water Settlement live data portal'
+  description: 'Choctaw–Chickasaw Water Settlement portal with live USGS data'
 }
 
 export default function RootLayout({
@@ -13,12 +16,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: 'system-ui', background: '#EFE9D8' }}>
-        <Header />
-        <main style={{ minHeight: 'calc(100vh - 120px)', padding: 24 }}>
-          {children}
-        </main>
-        <Footer />
+      <body className={`${inter.className} bg-[#EFE9D8] text-[#1F2933]`}>
+        {children}
       </body>
     </html>
   )
