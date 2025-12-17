@@ -1,12 +1,20 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Water Settlement Portal',
-  description: 'Choctaw–Chickasaw Water Settlement portal with live USGS data'
+  title: {
+    default: 'Choctaw-Chickasaw Water Settlement Portal',
+    template: '%s | Water Settlement Portal'
+  },
+  description: 'Real-time water level monitoring for the Choctaw and Chickasaw Nations Water Settlement Agreement. Track reservoir levels and river flows across southeastern Oklahoma.',
+  keywords: ['Choctaw Nation', 'Chickasaw Nation', 'Water Settlement', 'Oklahoma', 'Sardis Lake', 'USGS', 'Water Levels', 'Kiamichi River'],
+  authors: [{ name: 'Choctaw Nation' }],
+  openGraph: {
+    title: 'Choctaw-Chickasaw Water Settlement Portal',
+    description: 'Real-time water level monitoring for the Choctaw and Chickasaw Nations Water Settlement Agreement.',
+    type: 'website',
+    locale: 'en_US'
+  }
 }
 
 export default function RootLayout({
@@ -16,7 +24,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-[#EFE9D8] text-[#1F2933]`}>
+      <body className="bg-gray-50 text-gray-900 antialiased font-sans">
         {children}
       </body>
     </html>
