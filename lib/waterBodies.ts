@@ -38,8 +38,8 @@ export interface WaterBody {
   isSettlementCritical: boolean
   /** Managing agency */
   agency: 'USACE' | 'BOR' | 'USGS' | 'State'
-  /** Parameter code: 00065 = gage height, 00060 = discharge */
-  parameterCode: '00065' | '00060'
+  /** Parameter code: 00065 = gage height, 00060 = discharge, 62614 = reservoir elevation (NGVD29) */
+  parameterCode: '00065' | '00060' | '62614'
 }
 
 /**
@@ -84,7 +84,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     county: 'Pushmataha/Latimer',
     isSettlementCritical: true,
     agency: 'USACE',
-    parameterCode: '00065'
+    parameterCode: '62614'
   },
   {
     id: 'mcgee-creek',
@@ -99,7 +99,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     county: 'Atoka',
     isSettlementCritical: true,
     agency: 'BOR',
-    parameterCode: '00065'
+    parameterCode: '62614'
   },
   {
     id: 'hugo',
@@ -114,7 +114,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     county: 'Choctaw',
     isSettlementCritical: true,
     agency: 'USACE',
-    parameterCode: '00065'
+    parameterCode: '62614'
   },
   {
     id: 'broken-bow',
@@ -129,7 +129,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     county: 'McCurtain',
     isSettlementCritical: true,
     agency: 'USACE',
-    parameterCode: '00065'
+    parameterCode: '62614'
   },
   {
     id: 'pine-creek',
@@ -144,7 +144,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     county: 'McCurtain',
     isSettlementCritical: true,
     agency: 'USACE',
-    parameterCode: '00065'
+    parameterCode: '62614'
   },
   {
     id: 'eufaula',
@@ -159,7 +159,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     county: 'McIntosh/Pittsburg',
     isSettlementCritical: true,
     agency: 'USACE',
-    parameterCode: '00065'
+    parameterCode: '62614'
   },
   {
     id: 'wister',
@@ -174,7 +174,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     county: 'Le Flore',
     isSettlementCritical: true,
     agency: 'USACE',
-    parameterCode: '00065'
+    parameterCode: '62614'
   },
   {
     id: 'atoka',

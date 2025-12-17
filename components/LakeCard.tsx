@@ -49,7 +49,7 @@ interface LakeCardProps {
 
 const ALERT_STYLES: Record<AlertLevel, { badge: string; bg: string; border: string }> = {
   normal: {
-    badge: 'bg-emerald-100 text-emerald-800',
+    badge: 'bg-emerald-100 text-emerald-900',
     bg: 'bg-white',
     border: 'border-slate-200'
   },
