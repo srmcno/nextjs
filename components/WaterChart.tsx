@@ -9,15 +9,25 @@ import {
   ResponsiveContainer
 } from 'recharts'
 
-export default function WaterChart({ data }: any) {
+type Point = { t: string; v: number }
+
+export default function WaterChart({ data }: { data: Point[] }) {
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <LineChart data={data}>
-        <XAxis dataKey="time" hide />
-        <YAxis />
-        <Tooltip />
-        <Line dataKey="level" stroke="#1E4F91" strokeWidth={2} />
-      </LineChart>
-    </ResponsiveContainer>
+    <div className="h-44 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <XAxis dataKey="t" hide />
+          <YAxis width={40} tick={{ fontSize: 12 }} />
+          <Tooltip />
+          <Line
+            type="monotone"
+            dataKey="v"
+            stroke="#1E4F91"
+            strokeWidth={2}
+            dot={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   )
 }
