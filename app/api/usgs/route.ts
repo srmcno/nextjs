@@ -9,8 +9,8 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Missing ?site= parameter' }, { status: 400 })
   }
 
-  // Validate parameter code (00065 = gage height, 00060 = discharge)
-  const validParams = ['00065', '00060']
+  // Validate parameter code (00065 = gage height, 00060 = discharge, 62614 = reservoir elevation NGVD29)
+  const validParams = ['00065', '00060', '62614']
   if (!validParams.includes(param)) {
     return NextResponse.json(
       { error: `Invalid parameter code. Use: ${validParams.join(', ')}` },
