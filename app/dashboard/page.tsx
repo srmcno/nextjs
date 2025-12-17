@@ -5,6 +5,8 @@ import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import LakeCard from '../../components/LakeCard'
 import SearchFilter from '../../components/SearchFilter'
+import DataStatusBanner from '../../components/DataStatusBanner'
+import OKCSystemStatus from '../../components/OKCSystemStatus'
 import { SETTLEMENT_WATER_BODIES, getReservoirs, getRivers, WaterBody } from '../../lib/waterBodies'
 
 export default function DashboardPage() {
@@ -17,6 +19,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Header />
+      <DataStatusBanner />
 
       {/* Header Section */}
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-sky-900 text-white">
@@ -72,6 +75,11 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8">
+        {/* OKC System Status - Per Exhibit 13 */}
+        <div className="mb-8">
+          <OKCSystemStatus />
+        </div>
+
         {/* Search and Filter */}
         <SearchFilter
           waterBodies={allWaterBodies}

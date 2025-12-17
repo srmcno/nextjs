@@ -151,6 +151,39 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
     return calculatePoolPercentage(latest.v, conservationPool, streambed)
   }, [latest, conservationPool, streambed])
 
+  const stats = useMemo(() => {
+    if (!series.length) return null
+    const values = series.map(p => p.v)
+    const min = Math.min(...values)
+    const max = Math.max(...values)
+    const avg = values.reduce((a, b) => a + b, 0) / values.length
+    const first = series[0].v
+    const last = series[series.length - 1].v
+    const change = last - first
+    const changePercent = (change / first) * 100
+
+    return { min, max, avg, change, changePercent }
+  }, [series])
+
+  const trend = useMemo(() => {
+    if (!series.length || series.length < 10) return 'stable'
+
+    // Calculate trend from last 30 readings
+    const recentData = series.slice(-30)
+    const firstHalf = recentData.slice(0, 15)
+    const secondHalf = recentData.slice(15)
+
+    const firstAvg = firstHalf.reduce((a, b) => a + b.v, 0) / firstHalf.length
+    const secondAvg = secondHalf.reduce((a, b) => a + b.v, 0) / secondHalf.length
+
+    const diff = secondAvg - firstAvg
+    const threshold = isRiver ? firstAvg * 0.05 : 0.3 // 5% for rivers, 0.3 ft for reservoirs
+
+    if (diff > threshold) return 'rising'
+    if (diff < -threshold) return 'falling'
+    return 'stable'
+  }, [series, isRiver])
+
   const alertMessage = useMemo(() => {
     if (!latest) return null
     return getAlertMessage(waterBody, latest.v)
@@ -262,13 +295,35 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                   {isRiver ? 'Current Flow' : 'Current Level'}
                 </div>
-                <div className="mt-1 text-3xl font-extrabold text-gray-900">
-                  {latest ? latest.v.toFixed(2) : '—'}
-                  <span className="ml-1 text-base font-semibold text-gray-500">
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-3xl font-extrabold text-gray-900">
+                    {latest ? latest.v.toFixed(2) : '—'}
+                  </span>
+                  <span className="text-base font-semibold text-gray-500">
                     {isRiver ? 'cfs' : 'ft'}
                   </span>
+                  {trend && (
+                    <span className={`inline-flex items-center text-sm font-semibold ${
+                      trend === 'rising' ? 'text-blue-600' :
+                      trend === 'falling' ? 'text-red-600' :
+                      'text-gray-500'
+                    }`}>
+                      {trend === 'rising' ? '↗' : trend === 'falling' ? '↘' : '→'}
+                    </span>
+                  )}
                 </div>
                 <div className="mt-1 text-xs text-gray-500">Updated {latest ? fmtTime(latest.t) : '—'}</div>
+                {stats && (
+                  <div className="mt-2 text-[11px] text-gray-600">
+                    24h change: <span className={`font-semibold ${
+                      stats.change > 0 ? 'text-blue-600' :
+                      stats.change < 0 ? 'text-red-600' :
+                      'text-gray-600'
+                    }`}>
+                      {stats.change > 0 ? '+' : ''}{stats.change.toFixed(2)} {isRiver ? 'cfs' : 'ft'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-2 text-xs text-gray-600">
@@ -286,6 +341,27 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
                 )}
               </div>
             </div>
+
+            {/* 24h Statistics */}
+            {stats && (
+              <div className="mb-4 rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3">
+                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-600">24-Hour Range</div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <div className="text-xs text-slate-500">Min</div>
+                    <div className="text-base font-bold text-slate-900">{stats.min.toFixed(1)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Avg</div>
+                    <div className="text-base font-bold text-slate-900">{stats.avg.toFixed(1)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Max</div>
+                    <div className="text-base font-bold text-slate-900">{stats.max.toFixed(1)}</div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Pool Level Progress Bar */}
             {poolPercentage !== null && !isRiver && (
@@ -369,7 +445,15 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
                 <span className="hidden rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600 sm:inline">Agreement guardrails</span>
               </div>
               <div className="flex items-center gap-2">
-                <DataExport waterBodyName={name} data={series} usgsId={usgsId} />
+                <DataExport
+                  waterBodyName={name}
+                  data={series}
+                  usgsId={usgsId}
+                  conservationPool={conservationPool}
+                  currentLevel={latest?.v}
+                  poolPercentage={poolPercentage}
+                  alertLevel={alertLevel}
+                />
                 <a
                   className="font-semibold text-blue-600 hover:underline"
                   href={`https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
