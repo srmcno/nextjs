@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -18,8 +17,13 @@ export default function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Brand */}
         <Link href="/" className="group flex items-center gap-3">
+          {/* Updated Logo Container */}
           <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/20">
-            <img src="/cno-logo.svg" alt="Logo" className="h-8 w-8 object-contain" />
+            <img 
+              src="image_0.png" 
+              alt="Choctaw and Chickasaw Nations Seals" 
+              className="h-8 w-8 object-contain" 
+            />
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold leading-none text-white tracking-wide">Water Portal</span>
