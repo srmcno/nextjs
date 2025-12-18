@@ -12,37 +12,7 @@ import {
   SARDIS_WITHDRAWAL_THRESHOLDS
 } from '../lib/waterBodies'
 
-interface UsgsValue {
-  dateTime: string
-  value: string
-}
-
-interface UsgsJson {
-  value?: {
-    timeSeries?: Array<{
-      values?: Array<{
-        value?: UsgsValue[]
-      }>
-    }>
-  }
-}
-
 type Point = { t: string; v: number }
-
-function fmtTime(iso: string) {
-  try {
-    const d = new Date(iso)
-    return d.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  } catch {
-    return iso
-  }
-}
 
 interface LakeCardProps {
   waterBody: WaterBody
@@ -76,9 +46,9 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
   const [err, setErr] = useState<string | null>(null)
   const [latest, setLatest] = useState<Point | null>(null)
   const [series, setSeries] = useState<Point[]>([])
-  const [dataSource, setDataSource] = useState<'usgs-live' | 'mock-demo' | null>(null)
+  const [sourceUsed, setSourceUsed] = useState<'usace' | 'usgs' | null>(null)
 
-  const { usgsId, parameterCode, conservationPool, streambed, name, type, description, county } = waterBody
+  const { usgsId, usaceId, parameterCode, usaceParam, conservationPool, streambed, name, type, county } = waterBody
   const isRiver = type === 'river'
 
   useEffect(() => {
@@ -86,42 +56,65 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
     setLoading(true)
     setErr(null)
 
-    // Strategy: Try primary parameter, fallback to common ones
-    const paramsToTry = isRiver ? [parameterCode, '00060'] : [parameterCode, '62614', '00065']
-
     const load = async () => {
-      for (const param of paramsToTry) {
-        if (!param) continue
-        try {
-          const res = await fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${param}`)
-          const headerSource = res.headers.get('X-Data-Source') as 'usgs-live' | 'mock-demo' | null
-          if (!cancelled) setDataSource(headerSource)
-          
-          const json: UsgsJson = await res.json()
-          const values = json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []
-          const pts = values.map(v => ({ t: v.dateTime, v: Number(v.value) })).filter(p => Number.isFinite(p.v))
+      let dataFound = false
 
-          if (pts.length > 0) {
-            if (cancelled) return
-            setSeries(pts)
-            setLatest(pts[pts.length - 1])
-            setLoading(false)
-            return
+      // 1. Try USACE API first for Reservoirs
+      if (usaceId && usaceParam && !cancelled) {
+        try {
+          const res = await fetch(`/api/usace?site=${usaceId}&param=${usaceParam}`)
+          if (res.ok) {
+            const json = await res.json()
+            if (json.values && json.values.length > 0) {
+              const pts = json.values.map((v: any) => ({ t: v.dateTime, v: Number(v.value) }))
+              if (!cancelled) {
+                setSeries(pts)
+                setLatest(pts[pts.length - 1])
+                setSourceUsed('usace')
+                setLoading(false)
+                dataFound = true
+                return 
+              }
+            }
           }
         } catch (e) {
-          console.error(`Failed to load param ${param} for ${usgsId}`, e)
+          console.warn(`USACE fetch failed for ${name}, falling back...`)
         }
       }
-      if (!cancelled) {
+
+      // 2. Fallback to USGS API (or primary for Rivers)
+      if (!dataFound && !cancelled) {
+        try {
+          const res = await fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${parameterCode}`)
+          const json = await res.json()
+          const values = json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []
+          const pts = values.map((v: any) => ({ t: v.dateTime, v: Number(v.value) })).filter((p: any) => Number.isFinite(p.v))
+
+          if (pts.length > 0) {
+            if (!cancelled) {
+              setSeries(pts)
+              setLatest(pts[pts.length - 1])
+              setSourceUsed('usgs')
+              setLoading(false)
+              dataFound = true
+            }
+          }
+        } catch (e) {
+          console.error(`USGS fetch failed for ${name}`, e)
+        }
+      }
+
+      if (!dataFound && !cancelled) {
         setErr('Data unavailable')
         setLoading(false)
       }
     }
+
     void load()
     return () => { cancelled = true }
-  }, [usgsId, parameterCode, isRiver])
+  }, [usgsId, usaceId, usaceParam, parameterCode, name])
 
-  // Calculations
+  // ... (Calculations logic remains the same)
   const alertLevel = useMemo(() => {
     if (!latest || !conservationPool) return 'normal'
     return getAlertLevel(latest.v, conservationPool)
@@ -135,10 +128,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
   const stats = useMemo(() => {
     if (!series.length) return null
     const vals = series.map(p => p.v)
-    const min = Math.min(...vals)
-    const max = Math.max(...vals)
     const change = series[series.length - 1].v - series[0].v
-    return { min, max, change }
+    return { change }
   }, [series])
 
   const trend = useMemo(() => {
@@ -154,21 +145,14 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
   }, [series, isRiver])
 
   const alertMessage = useMemo(() => latest ? getAlertMessage(waterBody, latest.v) : null, [latest, waterBody])
-  
   const sardisRestricted = waterBody.id === 'sardis' && latest && latest.v < SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal
   const styles = ALERT_CONFIG[alertLevel]
-
-  const statusLabel = {
-    normal: 'Normal',
-    watch: 'Watch',
-    warning: 'Warning',
-    critical: 'Critical'
-  }[alertLevel]
+  const statusLabel = { normal: 'Normal', watch: 'Watch', warning: 'Warning', critical: 'Critical' }[alertLevel]
 
   const sardisLine = waterBody.id === 'sardis' ? [{
     value: SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal,
     label: 'OKC Withdrawal Floor',
-    color: '#ef4444' // red-500
+    color: '#ef4444'
   }] : undefined
 
   return (
@@ -185,7 +169,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
             <div className="mt-1 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
               <span>{county} County</span>
               <span className="text-slate-300">•</span>
-              <span>USGS {usgsId}</span>
+              <span>{sourceUsed === 'usace' ? `USACE ${usaceId}` : `USGS ${usgsId}`}</span>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1.5">
@@ -294,7 +278,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
             {/* FOOTER ACTIONS */}
             <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
                <span className="text-[10px] font-medium text-slate-400">
-                 {dataSource === 'mock-demo' ? '⚠️ Demo Mode' : '✓ Live USGS'}
+                 {sourceUsed === 'usace' ? '✓ USACE Official' : '✓ USGS Proxy'}
                </span>
                <div className="flex gap-3">
                  <DataExport 
@@ -307,12 +291,14 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
                     alertLevel={alertLevel}
                  />
                  <a 
-                   href={`https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
+                   href={sourceUsed === 'usace' 
+                     ? `https://water.usace.army.mil/overview/swt/locations/${usaceId?.toLowerCase()}` 
+                     : `https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
                    target="_blank"
                    rel="noreferrer"
                    className="text-[11px] font-bold text-sky-600 hover:text-sky-800"
                  >
-                   USGS Page ↗
+                   {sourceUsed === 'usace' ? 'USACE Page ↗' : 'USGS Page ↗'}
                  </a>
                </div>
             </div>
