@@ -51,23 +51,40 @@ export default function DashboardPage() {
       {/* Legend */}
       <section className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-4">
-          <div className="flex flex-wrap items-center gap-4 text-sm">
-            <span className="font-medium text-gray-600">Status:</span>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-emerald-500"></span>
-              <span className="text-gray-600">Normal (≥95%)</span>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <span className="font-medium text-gray-600">Pool Status:</span>
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-emerald-500"></span>
+                <span className="text-gray-600">Normal (≥95%)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-sky-500"></span>
+                <span className="text-gray-600">Watch (85-95%)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-slate-500"></span>
+                <span className="text-gray-600">Warning (75-85%)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-red-500"></span>
+                <span className="text-gray-600">Critical (&lt;75%)</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-sky-500"></span>
-              <span className="text-gray-600">Watch (85-95%)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-slate-500"></span>
-              <span className="text-gray-600">Warning (75-85%)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-red-500"></span>
-              <span className="text-gray-600">Critical (&lt;75%)</span>
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <span className="font-medium text-gray-600">WSA Drought:</span>
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-yellow-400"></span>
+                <span className="text-gray-600">Moderate (65-75%)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-amber-500"></span>
+                <span className="text-gray-600">Advanced (50-65%)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-red-600"></span>
+                <span className="text-gray-600">Extreme (&lt;50%)</span>
+              </div>
             </div>
           </div>
         </div>
@@ -142,24 +159,61 @@ export default function DashboardPage() {
         {/* Info Section */}
         <section className="rounded-2xl bg-gray-100 p-6">
           <h3 className="text-lg font-semibold text-gray-900">About This Data</h3>
-          <div className="mt-3 grid gap-4 text-sm text-gray-700 md:grid-cols-3">
+          <div className="mt-3 grid gap-4 text-sm text-gray-700 md:grid-cols-2 lg:grid-cols-4">
             <div>
-              <div className="font-medium text-gray-900">Data Source</div>
+              <div className="font-medium text-gray-900">Data Sources</div>
               <p className="mt-1">
-                All water level and flow data comes from the U.S. Geological Survey (USGS) National Water Information System.
+                Primary: USGS National Water Information System. Supplementary: USACE Tulsa District, OWRB Monthly Reports.
               </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <a href="https://waterdata.usgs.gov/ok/nwis/current/?type=lake" target="_blank" rel="noreferrer" className="text-xs text-sky-600 hover:underline">USGS OK Lakes</a>
+                <a href="https://www.swt-wc.usace.army.mil/" target="_blank" rel="noreferrer" className="text-xs text-sky-600 hover:underline">USACE Tulsa</a>
+              </div>
             </div>
             <div>
               <div className="font-medium text-gray-900">Update Frequency</div>
               <p className="mt-1">
-                USGS stations typically report data every 15-60 minutes. This dashboard refreshes every 60 seconds.
+                USGS stations report every 15-60 minutes. Dashboard refreshes on page load. Real-time data may have 15-30 minute latency.
               </p>
             </div>
             <div>
               <div className="font-medium text-gray-900">Pool Calculations</div>
               <p className="mt-1">
-                Pool percentage = (Current Level - Streambed) / (Conservation Pool - Streambed) × 100
+                Pool % = (Current - Streambed) / (Conservation - Streambed) × 100. Conservation pool elevations from USACE/BOR surveys.
               </p>
+            </div>
+            <div>
+              <div className="font-medium text-gray-900">WSA Drought Determination</div>
+              <p className="mt-1">
+                Per Section 6: ALL THREE must be below threshold: (1) Combined OKC system, (2) Hefner individually, (3) Draper individually.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* WSA Key Numbers */}
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+          <h3 className="text-lg font-semibold text-gray-900">Water Settlement Agreement Key Numbers</h3>
+          <div className="mt-4 grid gap-4 text-sm md:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg bg-slate-50 p-4">
+              <div className="text-2xl font-bold text-slate-900">115,000</div>
+              <div className="text-xs font-semibold uppercase text-slate-600">AFY City Appropriation</div>
+              <div className="mt-1 text-xs text-slate-500">Annual Kiamichi Basin rights</div>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-4">
+              <div className="text-2xl font-bold text-slate-900">297,200</div>
+              <div className="text-xs font-semibold uppercase text-slate-600">AF Sardis Conservation</div>
+              <div className="mt-1 text-xs text-slate-500">Total conservation storage</div>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-4">
+              <div className="text-2xl font-bold text-slate-900">407,105</div>
+              <div className="text-xs font-semibold uppercase text-slate-600">AF OKC System Capacity</div>
+              <div className="mt-1 text-xs text-slate-500">Combined 6-reservoir live storage</div>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-4">
+              <div className="text-2xl font-bold text-slate-900">50 cfs</div>
+              <div className="text-xs font-semibold uppercase text-slate-600">Bypass Requirement</div>
+              <div className="mt-1 text-xs text-slate-500">Minimum flow at Moyers Crossing</div>
             </div>
           </div>
         </section>

@@ -111,36 +111,46 @@ export const MOCK_WATER_DATA: Record<string, { parameterCode: string; data: Mock
     parameterCode: '62614',
     data: generateMockData(472.3, 0.6, 96, 'falling', 0.5)
   },
-  '07334200': { // Atoka - Near conservation pool (part of OKC system)
-    parameterCode: '00065',
-    data: generateMockData(580.8, 0.5, 96, 'stable', 0.3)
-  },
-  '07335700': { // Kiamichi River Big Cedar - Low flow conditions
+  // Kiamichi River monitoring stations
+  '07335700': { // Kiamichi River near Big Cedar - Upper river
     parameterCode: '00060',
     data: generateRiverFlowData(95, 18)
   },
-  '07336200': { // Kiamichi River Antlers - Moderate flow
+  '07336500': { // Kiamichi River at Moyers - CRITICAL: Point of Diversion for OKC
+    // Per WSA: 50 cfs must bypass when City diverts up to 250 cfs (total flow required: 300 cfs)
+    parameterCode: '00060',
+    data: generateRiverFlowData(285, 35) // Healthy flow allowing full diversion with bypass
+  },
+  '07336200': { // Kiamichi River near Antlers - Downstream
     parameterCode: '00060',
     data: generateRiverFlowData(165, 25)
   },
 
-  // === OKC RESERVOIR SYSTEM (for combined storage calculations) ===
-  // Note: Canton, Draper, Hefner, and Overholser don't have real USGS site IDs in settlement docs
-  // These are simulated for the combined storage calculations per Exhibit 13
+  // === OKC RESERVOIR SYSTEM (per Exhibit 13) ===
+  // All 6 reservoirs now have verified USGS station IDs
 
-  'okc-canton': { // Canton Lake - OKC system
+  '07333010': { // Atoka Reservoir - Primary OKC supply reservoir
+    // https://waterdata.usgs.gov/monitoring-location/USGS-07333010/
     parameterCode: '00065',
-    data: generateMockData(1608.2, 1.2, 96, 'stable', 0.2) // ~72% of capacity
+    data: generateMockData(585.8, 0.5, 96, 'stable', 0.3) // ~89% of live storage
   },
-  'okc-draper': { // Stanley Draper Lake - OKC system
+  '07238500': { // Canton Lake - OKC system (30% transit loss applies)
+    // https://waterdata.usgs.gov/monitoring-location/USGS-07238500/
+    parameterCode: '00065',
+    data: generateMockData(1608.2, 1.2, 96, 'stable', 0.2) // ~62% of capacity
+  },
+  '07229445': { // Stanley Draper Lake - DROUGHT CRITICAL reservoir
+    // https://waterdata.usgs.gov/monitoring-location/USGS-07229445/
     parameterCode: '00065',
     data: generateMockData(1182.5, 0.8, 96, 'falling', 0.5) // ~81% of capacity
   },
-  'okc-hefner': { // Lake Hefner - OKC system
+  '07159550': { // Lake Hefner - DROUGHT CRITICAL reservoir
+    // https://waterdata.usgs.gov/monitoring-location/USGS-07159550/
     parameterCode: '00065',
     data: generateMockData(1194.3, 0.6, 96, 'stable', 0.3) // ~86% of capacity
   },
-  'okc-overholser': { // Lake Overholser - OKC system
+  '07240500': { // Lake Overholser - OKC system
+    // https://waterdata.usgs.gov/monitoring-location/USGS-07240500/
     parameterCode: '00065',
     data: generateMockData(1237.8, 0.4, 96, 'stable', 0.1) // ~62% of capacity
   }
