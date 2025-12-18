@@ -1,343 +1,73 @@
-/**
- * Water Bodies Configuration for Choctaw-Chickasaw Water Settlement Agreement
- *
- * The settlement covers 22 counties in southeastern Oklahoma and includes
- * protections for water bodies critical to tribal sovereignty, municipal supply,
- * and ecological health.
- *
- * Sources:
- * - U.S. Army Corps of Engineers, Tulsa District
- * - Bureau of Reclamation
- * - USGS National Water Information System
- * - Choctaw-Chickasaw Nations Water Settlement Act (2016, WIIN Act)
- *
- * Data Sources (Live):
- * - USGS Water Services: https://waterservices.usgs.gov/
- * - USACE Tulsa District: https://www.swt-wc.usace.army.mil/
- * - OWRB Reservoir Storage: https://owrb.ok.gov/supply/drought/Lake_Levels_files/Monthly%20Reservoir%20Storage.pdf
- */
+// app/api/usace/route.ts
+import { NextResponse } from 'next/server'
 
-export type WaterBodyType = 'reservoir' | 'river' | 'lake'
-export type AlertLevel = 'normal' | 'watch' | 'warning' | 'critical'
+// The new "Official" API endpoint (CWMS Data API)
+const BASE_URL = 'https://cwms-data.usace.army.mil/cwms-data/timeseries'
 
-export interface WaterBody {
-  id: string
-  name: string
-  type: WaterBodyType
-  usgsId: string
-  /** Direct link to USGS monitoring page */
-  usgsUrl?: string
-  /** USACE station ID for additional data */
-  usaceId?: string
-  /** Conservation pool elevation in feet (for reservoirs/lakes) */
-  conservationPool?: number
-  /** Top of flood pool elevation in feet */
-  floodPoolTop?: number
-  /** Streambed elevation in feet */
-  streambed?: number
-  /** Top of dam elevation in feet */
-  topOfDam?: number
-  /** Minimum level before OKC withdrawal restrictions apply (for Sardis) */
-  withdrawalMinimum?: number
-  /** Bypass flow requirement in cfs (for rivers at diversion points) */
-  bypassRequirement?: number
-  /** Storage capacity in acre-feet */
-  storageCapacity?: number
-  /** Description of the water body */
-  description: string
-  /** County location */
-  county: string
-  /** Whether this is a critical settlement water body */
-  isSettlementCritical: boolean
-  /** Managing agency */
-  agency: 'USACE' | 'BOR' | 'USGS' | 'State' | 'OKC'
-  /** Parameter code: 00065 = gage height, 00060 = discharge, 62614 = reservoir elevation (NGVD29) */
-  parameterCode: '00065' | '00060' | '62614'
-}
-
-/**
- * Alert level thresholds as percentage of conservation pool
- */
-export const ALERT_THRESHOLDS = {
-  normal: 95,    // >= 95% of conservation pool
-  watch: 85,     // 85-95% of conservation pool
-  warning: 75,   // 75-85% of conservation pool
-  critical: 75   // < 75% of conservation pool
-} as const
-
-/**
- * Sardis Lake special thresholds per ODWC recommendations
- * Oklahoma City cannot withdraw water below these levels
- */
-export const SARDIS_WITHDRAWAL_THRESHOLDS = {
-  /** Minimum pool elevation for OKC withdrawals (feet) */
-  minimumForWithdrawal: 590,
-  /** Conservation pool elevation (feet) */
-  conservationPool: 599,
-  /** Below this level, recreation and fish/wildlife are severely impacted */
-  criticalLevel: 585
-} as const
-
-/**
- * Primary water bodies covered by the Choctaw-Chickasaw Water Settlement
- */
-export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
-  // ===== CRITICAL SETTLEMENT RESERVOIRS =====
-  {
-    id: 'sardis',
-    name: 'Sardis Lake',
-    type: 'reservoir',
-    usgsId: '07335775',
-    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07335775/',
-    usaceId: 'SARDO2',
-    conservationPool: 599,
-    floodPoolTop: 607,
-    streambed: 530,
-    topOfDam: 631,
-    withdrawalMinimum: 590,
-    storageCapacity: 297200, // Total conservation storage
-    description: 'CRITICAL: Central reservoir for the water settlement. Total conservation storage: 297,200 AF. OKC has 116,616 AF (39%). Seasonal release restrictions apply per WSA Section 6.',
-    county: 'Pushmataha/Latimer',
-    isSettlementCritical: true,
-    agency: 'USACE',
-    parameterCode: '62614'
-  },
-  {
-    id: 'mcgee-creek',
-    name: 'McGee Creek Reservoir',
-    type: 'reservoir',
-    usgsId: '07333900',
-    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07333900/',
-    conservationPool: 577.1,
-    floodPoolTop: 595.5,
-    streambed: 533,
-    topOfDam: 612,
-    storageCapacity: 88445,
-    description: 'Bureau of Reclamation reservoir providing water supply for Oklahoma City. Part of the OKC 6-reservoir system per Exhibit 13.',
-    county: 'Atoka',
-    isSettlementCritical: true,
-    agency: 'BOR',
-    parameterCode: '62614'
-  },
-  {
-    id: 'hugo',
-    name: 'Hugo Lake',
-    type: 'reservoir',
-    usgsId: '07336000',
-    conservationPool: 406,
-    floodPoolTop: 433,
-    streambed: 360,
-    topOfDam: 449,
-    description: 'Reservoir on the Kiamichi River providing flood control, water supply, and recreation.',
-    county: 'Choctaw',
-    isSettlementCritical: true,
-    agency: 'USACE',
-    parameterCode: '62614'
-  },
-  {
-    id: 'broken-bow',
-    name: 'Broken Bow Lake',
-    type: 'reservoir',
-    usgsId: '07337900',
-    conservationPool: 599.5,
-    floodPoolTop: 620,
-    streambed: 420,
-    topOfDam: 645,
-    description: 'Major reservoir on the Mountain Fork River with significant recreation and water supply value.',
-    county: 'McCurtain',
-    isSettlementCritical: true,
-    agency: 'USACE',
-    parameterCode: '62614'
-  },
-  {
-    id: 'pine-creek',
-    name: 'Pine Creek Lake',
-    type: 'reservoir',
-    usgsId: '07338500',
-    conservationPool: 438,
-    floodPoolTop: 480,
-    streambed: 384,
-    topOfDam: 509,
-    description: 'Reservoir on the Little River providing flood control and recreation.',
-    county: 'McCurtain',
-    isSettlementCritical: true,
-    agency: 'USACE',
-    parameterCode: '62614'
-  },
-  {
-    id: 'eufaula',
-    name: 'Lake Eufaula',
-    type: 'reservoir',
-    usgsId: '07245500',
-    conservationPool: 585,
-    floodPoolTop: 597,
-    streambed: 498,
-    topOfDam: 612,
-    description: 'Largest lake in Oklahoma by volume. Provides hydropower, water supply, navigation, and recreation.',
-    county: 'McIntosh/Pittsburg',
-    isSettlementCritical: true,
-    agency: 'USACE',
-    parameterCode: '62614'
-  },
-  {
-    id: 'wister',
-    name: 'Wister Lake',
-    type: 'reservoir',
-    usgsId: '07247000',
-    conservationPool: 478,
-    floodPoolTop: 502.5,
-    streambed: 428.5,
-    topOfDam: 527.5,
-    description: 'Reservoir on the Poteau River providing flood control and recreation.',
-    county: 'Le Flore',
-    isSettlementCritical: true,
-    agency: 'USACE',
-    parameterCode: '62614'
-  },
-  {
-    id: 'atoka',
-    name: 'Atoka Reservoir',
-    type: 'reservoir',
-    usgsId: '07333010',
-    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07333010/',
-    usaceId: 'ATKO2',
-    conservationPool: 590,
-    floodPoolTop: 594,
-    streambed: 550,
-    topOfDam: 610,
-    storageCapacity: 107940,
-    description: 'Primary water supply reservoir for Oklahoma City via pipeline. Part of the OKC 6-reservoir system per Exhibit 13.',
-    county: 'Atoka',
-    isSettlementCritical: true,
-    agency: 'OKC',
-    parameterCode: '00065'
-  },
-  // ===== KIAMICHI RIVER MONITORING STATIONS =====
-  {
-    id: 'kiamichi-big-cedar',
-    name: 'Kiamichi River near Big Cedar',
-    type: 'river',
-    usgsId: '07335700',
-    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07335700/',
-    description: 'Upper Kiamichi River monitoring station. Critical for tracking river flows that feed Sardis Lake.',
-    county: 'Le Flore',
-    isSettlementCritical: true,
-    agency: 'USGS',
-    parameterCode: '00060'
-  },
-  {
-    id: 'kiamichi-moyers',
-    name: 'Kiamichi River at Moyers',
-    type: 'river',
-    usgsId: '07336500',
-    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07336500/',
-    bypassRequirement: 50, // 50 cfs must bypass when City is diverting
-    description: 'CRITICAL: Point of Diversion for Oklahoma City. Per WSA, 50 cfs must bypass when City diverts up to 250 cfs. Total flow required: 300 cfs.',
-    county: 'Pushmataha',
-    isSettlementCritical: true,
-    agency: 'USGS',
-    parameterCode: '00060'
-  },
-  {
-    id: 'kiamichi-antlers',
-    name: 'Kiamichi River near Antlers',
-    type: 'river',
-    usgsId: '07336200',
-    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07336200/',
-    description: 'Mid-Kiamichi River monitoring station. Key location for streamflow monitoring under the settlement.',
-    county: 'Pushmataha',
-    isSettlementCritical: true,
-    agency: 'USGS',
-    parameterCode: '00060'
-  }
+// Common patterns for Tulsa District (SWT) data
+// ID = SHEF ID (e.g., CYDO2)
+// Param = Elev, Flow, Stage, Stor
+const TS_PATTERNS = [
+  (id: string, param: string) => `${id}.${param}.Inst.1Hour.0.Ccp-Rev`,
+  (id: string, param: string) => `${id}.${param}.Inst.1Hour.0.Rev-Regi`,
+  (id: string, param: string) => `${id}.${param}.Inst.1Hour.0.Usgs-Raw`,
+  (id: string, param: string) => `${id}.${param}.Inst.15Minutes.0.Ccp-Rev`,
+  (id: string, param: string) => `${id}.${param}.Inst.15Minutes.0.Usgs-Raw`,
+  // Fallback for daily data if hourly is missing
+  (id: string, param: string) => `${id}.${param}.Ave.1Day.1Day.Ccp-Rev`,
 ]
 
-/**
- * Get alert level based on current water level and conservation pool
- */
-export function getAlertLevel(
-  currentLevel: number,
-  conservationPool: number
-): AlertLevel {
-  const percentFull = (currentLevel / conservationPool) * 100
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const locationId = searchParams.get('site') // e.g., 'CYDO2'
+  const param = searchParams.get('param') // 'Elev' or 'Flow' or 'Stage'
+  
+  if (!locationId || !param) {
+    return NextResponse.json({ error: 'Missing site or param' }, { status: 400 })
+  }
 
-  if (percentFull >= ALERT_THRESHOLDS.normal) return 'normal'
-  if (percentFull >= ALERT_THRESHOLDS.watch) return 'watch'
-  if (percentFull >= ALERT_THRESHOLDS.warning) return 'warning'
-  return 'critical'
-}
+  // Calculate time window (last 7 days to ensure we get a line)
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - 7)
+  
+  const beginStr = start.toISOString()
+  const endStr = end.toISOString()
 
-/**
- * Calculate pool percentage
- */
-export function calculatePoolPercentage(
-  currentLevel: number,
-  conservationPool: number,
-  streambed: number
-): number {
-  // Pool percentage = (current - streambed) / (conservation - streambed) * 100
-  const totalCapacity = conservationPool - streambed
-  const currentStorage = currentLevel - streambed
-  return Math.max(0, Math.min(100, (currentStorage / totalCapacity) * 100))
-}
+  // Try patterns until we find data
+  for (const pattern of TS_PATTERNS) {
+    const name = pattern(locationId, param)
+    const url = `${BASE_URL}?office=SWT&name=${encodeURIComponent(name)}&begin=${encodeURIComponent(beginStr)}&end=${encodeURIComponent(endStr)}&page-size=500`
 
-/**
- * Check if Sardis Lake withdrawals are restricted
- */
-export function isSardisWithdrawalRestricted(currentLevel: number): boolean {
-  return currentLevel < SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal
-}
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'Accept': 'application/json;version=2'
+        },
+        next: { revalidate: 300 } // Cache for 5 minutes
+      })
 
-/**
- * Get alert message for water body
- */
-export function getAlertMessage(
-  waterBody: WaterBody,
-  currentLevel: number
-): string | null {
-  if (!waterBody.conservationPool) return null
+      if (!res.ok) continue
 
-  const alertLevel = getAlertLevel(currentLevel, waterBody.conservationPool)
-
-  // Special case for Sardis Lake
-  if (waterBody.id === 'sardis') {
-    if (currentLevel < SARDIS_WITHDRAWAL_THRESHOLDS.criticalLevel) {
-      return 'CRITICAL: Lake level severely impacts recreation and wildlife. OKC withdrawals prohibited.'
-    }
-    if (currentLevel < SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal) {
-      return 'WARNING: Below minimum level for Oklahoma City withdrawals per settlement agreement.'
+      const data = await res.json()
+      
+      // Check if we actually got values
+      if (data.values && data.values.length > 0) {
+        return NextResponse.json({
+          source: 'usace-cwms',
+          timeseriesId: name,
+          values: data.values.map((v: any) => ({
+            dateTime: new Date(v[0]).toISOString(),
+            value: v[1]
+          })),
+          units: data.units
+        })
+      }
+    } catch (e) {
+      console.error(`Failed to fetch USACE data for ${name}:`, e)
+      // Continue to next pattern
     }
   }
 
-  switch (alertLevel) {
-    case 'critical':
-      return 'CRITICAL: Water level significantly below conservation pool.'
-    case 'warning':
-      return 'WARNING: Water level below normal operating range.'
-    case 'watch':
-      return 'WATCH: Water level slightly below conservation pool.'
-    default:
-      return null
-  }
-}
-
-/**
- * Get water body by ID
- */
-export function getWaterBody(id: string): WaterBody | undefined {
-  return SETTLEMENT_WATER_BODIES.find(wb => wb.id === id)
-}
-
-/**
- * Get all reservoirs
- */
-export function getReservoirs(): WaterBody[] {
-  return SETTLEMENT_WATER_BODIES.filter(wb => wb.type === 'reservoir')
-}
-
-/**
- * Get all rivers
- */
-export function getRivers(): WaterBody[] {
-  return SETTLEMENT_WATER_BODIES.filter(wb => wb.type === 'river')
+  return NextResponse.json({ error: 'No data found for this location' }, { status: 404 })
 }
