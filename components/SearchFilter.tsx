@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { WaterBody, AlertLevel } from '../lib/waterBodies'
+import { WaterBody } from '../lib/waterBodies'
 
 interface SearchFilterProps {
   onFilterChange: (filtered: WaterBody[]) => void

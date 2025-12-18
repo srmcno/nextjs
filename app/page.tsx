@@ -3,7 +3,6 @@ import Footer from '../components/Footer'
 import LakeCard from '../components/LakeCard'
 import DataStatusBanner from '../components/DataStatusBanner'
 import {
-  SETTLEMENT_WATER_BODIES,
   getReservoirs,
   SARDIS_WITHDRAWAL_THRESHOLDS
 } from '../lib/waterBodies'
@@ -192,7 +191,7 @@ export default function Home() {
                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-2xl text-blue-700">⚖️</div>
                <h3 className="mb-2 text-lg font-bold text-slate-900">Sovereignty & Rights</h3>
                <p className="text-sm leading-relaxed text-slate-600">
-                 Recognizes the Nations' historic treaty rights and establishes a formal role in water planning. The Tribes have a seat at the table for all major water export or transfer decisions.
+                 Recognizes the Nations&apos; historic treaty rights and establishes a formal role in water planning. The Tribes have a seat at the table for all major water export or transfer decisions.
                </p>
              </div>
              
@@ -200,7 +199,7 @@ export default function Home() {
                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-2xl text-emerald-700">🛡️</div>
                <h3 className="mb-2 text-lg font-bold text-slate-900">Environmental Protection</h3>
                <p className="text-sm leading-relaxed text-slate-600">
-                 Sets hard "floors" on lake levels. If Sardis Lake drops below conservation thresholds, Oklahoma City's withdrawals must stop to protect fish, wildlife, and tourism.
+                 Sets hard &quot;floors&quot; on lake levels. If Sardis Lake drops below conservation thresholds, Oklahoma City&apos;s withdrawals must stop to protect fish, wildlife, and tourism.
                </p>
              </div>
 
@@ -208,7 +207,7 @@ export default function Home() {
                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-2xl text-purple-700">🤝</div>
                <h3 className="mb-2 text-lg font-bold text-slate-900">Regional Cooperation</h3>
                <p className="text-sm leading-relaxed text-slate-600">
-                 Creates a predictable system for all users. The "Combined Storage" system balances OKC's needs with the ecological health of the Kiamichi Basin.
+                 Creates a predictable system for all users. The &quot;Combined Storage&quot; system balances OKC&apos;s needs with the ecological health of the Kiamichi Basin.
                </p>
              </div>
           </div>

@@ -58,7 +58,7 @@ export default function AlertBanner({ alerts }: AlertBannerProps) {
               {level === 'info' && 'Water Level Information'}
             </div>
             <div className="mt-1 space-y-1">
-              {alertsToShow.slice(0, 3).map((alert, idx) => (
+              {alertsToShow.slice(0, 3).map((alert) => (
                 <div key={alert.id} className="text-sm">
                   <span className="font-semibold">{alert.waterBody}:</span> {alert.message}
                 </div>

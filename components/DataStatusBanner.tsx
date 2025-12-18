@@ -8,18 +8,17 @@ interface DataStatusBannerProps {
 }
 
 export default function DataStatusBanner({ persistent = false }: DataStatusBannerProps) {
-  const [dismissed, setDismissed] = useState(false)
+  const [dismissed, setDismissed] = useState(() => {
+    // Initialize dismissed state from localStorage
+    if (typeof window !== 'undefined' && !persistent) {
+      const wasDismissed = localStorage.getItem('data-status-banner-dismissed')
+      return wasDismissed === 'true'
+    }
+    return false
+  })
   const [dataSource, setDataSource] = useState<'checking' | 'live' | 'mock' | 'mixed'>('checking')
 
   useEffect(() => {
-    // Check if we've dismissed this banner before
-    if (!persistent) {
-      const wasDismissed = localStorage.getItem('data-status-banner-dismissed')
-      if (wasDismissed === 'true') {
-        setDismissed(true)
-      }
-    }
-
     // Check a sample of water bodies to see if we're getting live or mock data
     const checkDataSources = async () => {
       try {
@@ -82,7 +81,7 @@ export default function DataStatusBanner({ persistent = false }: DataStatusBanne
               <div className="mt-1 text-sm text-amber-800">
                 {dataSource === 'mock' && (
                   <>
-                    You're viewing simulated data for demonstration purposes. The USGS live data service is currently unavailable.
+                    You&apos;re viewing simulated data for demonstration purposes. The USGS live data service is currently unavailable.
                     All water levels and flows shown are realistic simulations based on typical patterns for each water body.
                   </>
                 )}

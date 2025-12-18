@@ -107,7 +107,7 @@ export default function AcreFootConverter({ value, unit, label }: AcreFootConver
         <span>{value.toLocaleString()}</span>
         <span className="text-slate-500">{unitLabel}</span>
         <span className="text-xs text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
-          (What's this?)
+          (What&apos;s this?)
         </span>
       </button>
 
