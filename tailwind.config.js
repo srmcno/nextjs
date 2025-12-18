@@ -4,7 +4,25 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', 'sans-serif']
+        // Modern system stack for best mobile readability
+        sans: [
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Helvetica Neue',
+          'Arial',
+          'sans-serif'
+        ]
+      },
+      colors: {
+        // Custom settlement-themed colors
+        settlement: {
+          blue: '#0284c7', // Sky-600
+          teal: '#0d9488', // Teal-600
+          navy: '#0f172a', // Slate-900
+        }
       }
     }
   },
