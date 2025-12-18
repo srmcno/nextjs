@@ -29,7 +29,9 @@ export default function OKCSystemStatus() {
                const r = await fetch(`/api/usace?site=${res.usaceId}&param=Elev`)
                const d = await r.json()
                if (d.values?.length) val = d.values[d.values.length - 1].value
-             } catch(e) {}
+             } catch {
+               // Silent fallback to USGS
+             }
           }
 
           if (val === null) {

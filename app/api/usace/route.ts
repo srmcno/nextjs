@@ -66,9 +66,13 @@ export async function GET(request: Request) {
       const data = await res.json()
       if (data.values && data.values.length > 0) {
         // Filter out null values and format
+        interface USACETimeSeriesValue {
+          0: number;  // timestamp
+          1: number | null;  // value
+        }
         const cleanValues = data.values
-          .filter((v: any[]) => v[1] !== null)
-          .map((v: any[]) => ({
+          .filter((v: USACETimeSeriesValue) => v[1] !== null)
+          .map((v: USACETimeSeriesValue) => ({
             dateTime: new Date(v[0]).toISOString(),
             value: v[1]
           }))

@@ -178,17 +178,13 @@ export function determineWSADroughtCondition(
   })
 
   let condition: DroughtCondition = 'none'
-  let activeThreshold = 0;
   // Check from most severe to least
   if (checkThreshold(50).all) {
     condition = 'extreme'
-    activeThreshold = 50
   } else if (checkThreshold(65).all) {
     condition = 'advanced'
-    activeThreshold = 65
   } else if (checkThreshold(75).all) {
     condition = 'moderate'
-    activeThreshold = 75
   }
 
   // For display purposes, show which components are currently below the next threshold

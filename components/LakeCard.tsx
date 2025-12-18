@@ -53,10 +53,14 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setErr(null)
 
     const load = async () => {
+      // Set loading state only if not cancelled
+      if (!cancelled) {
+        setLoading(true)
+        setErr(null)
+      }
+      
       let dataFound = false
 
       // 1. Try USACE API first for Reservoirs
@@ -66,7 +70,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
           if (res.ok) {
             const json = await res.json()
             if (json.values && json.values.length > 0) {
-              const pts = json.values.map((v: any) => ({ t: v.dateTime, v: Number(v.value) }))
+              interface USACEValue { dateTime: string; value: number }
+              const pts = json.values.map((v: USACEValue) => ({ t: v.dateTime, v: Number(v.value) }))
               if (!cancelled) {
                 setSeries(pts)
                 setLatest(pts[pts.length - 1])
@@ -77,8 +82,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
               }
             }
           }
-        } catch (e) {
-          console.warn(`USACE fetch failed for ${name}, falling back...`)
+        } catch {
+          // Silently fall back to USGS
         }
       }
 
@@ -88,7 +93,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
           const res = await fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${parameterCode}`)
           const json = await res.json()
           const values = json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []
-          const pts = values.map((v: any) => ({ t: v.dateTime, v: Number(v.value) })).filter((p: any) => Number.isFinite(p.v))
+          interface USGSValue { dateTime: string; value: number }
+          const pts = values.map((v: USGSValue) => ({ t: v.dateTime, v: Number(v.value) })).filter((p: Point) => Number.isFinite(p.v))
 
           if (pts.length > 0) {
             if (!cancelled) {
@@ -99,8 +105,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
               dataFound = true
             }
           }
-        } catch (e) {
-          console.error(`USGS fetch failed for ${name}`, e)
+        } catch (error) {
+          console.error(`USGS fetch failed for ${name}`, error)
         }
       }
 
@@ -127,7 +133,6 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
 
   const stats = useMemo(() => {
     if (!series.length) return null
-    const vals = series.map(p => p.v)
     const change = series[series.length - 1].v - series[0].v
     return { change }
   }, [series])
