@@ -41,7 +41,7 @@ export default function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
               </span>
-              Live USGS System Data
+              Live USACE & USGS System Data
             </div>
 
             <div>
@@ -51,7 +51,7 @@ export default function Home() {
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-200 to-emerald-200">Transparency Portal</span>
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">
-                Monitoring reservoir levels and river flows in real-time. We layer the <strong>2016 Settlement Agreement</strong> guardrails directly onto live charts to ensure accountability and environmental protection.
+                Monitoring reservoir levels and river flows in real-time using official <strong>US Army Corps of Engineers</strong> data. We layer the <strong>2016 Settlement Agreement</strong> guardrails directly onto live charts to ensure accountability.
               </p>
             </div>
 
@@ -131,7 +131,7 @@ export default function Home() {
               </div>
 
               <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4 text-xs text-slate-400">
-                <span>Source: USGS Gauge 07335775</span>
+                <span>Source: USACE Gauge CYDO2</span>
                 <a href="/dashboard" className="font-semibold text-white hover:text-emerald-300 hover:underline">See full chart →</a>
               </div>
             </div>
