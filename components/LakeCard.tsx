@@ -396,24 +396,49 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
             )}
 
             {/* Settlement guardrail */}
-            {!isRiver && (
-              <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-relaxed text-slate-700">
-                <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-sky-800">
-                  <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-sky-600 text-[10px] text-white">!</span>
-                  Settlement guardrails
-                </div>
-                {waterBody.id === 'sardis' ? (
-                  <p>
-                    Oklahoma City withdrawals pause when Sardis falls below {SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal} ft,
-                    and recreation/wildlife protections trigger heightened alerts below {SARDIS_WITHDRAWAL_THRESHOLDS.criticalLevel} ft.
-                  </p>
-                ) : (
-                  <p>
-                    Pools are compared to conservation storage; alerts follow the settlement tiers (watch, warning, critical) set off of the pool percentage bands.
-                  </p>
-                )}
+            <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-relaxed text-slate-700">
+              <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-sky-800">
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-sky-600 text-[10px] text-white">!</span>
+                Settlement guardrails
               </div>
-            )}
+              {waterBody.id === 'sardis' ? (
+                <p>
+                  Oklahoma City withdrawals pause when Sardis falls below {SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal} ft,
+                  and recreation/wildlife protections trigger heightened alerts below {SARDIS_WITHDRAWAL_THRESHOLDS.criticalLevel} ft.
+                  Per WSA Section 6, seasonal restrictions apply: 599' MSL (Apr-Aug), 595' MSL (Sep-Mar).
+                </p>
+              ) : waterBody.id === 'kiamichi-moyers' ? (
+                <div>
+                  <p className="font-semibold text-red-800">CRITICAL: Point of Diversion for Oklahoma City</p>
+                  <p className="mt-1">
+                    Per WSA: When City diverts water (up to 250 cfs), a minimum of <span className="font-bold">50 cfs must bypass</span> to
+                    maintain downstream flows. Total flow required for full diversion: 300 cfs.
+                  </p>
+                  {latest && (
+                    <p className={`mt-2 font-semibold ${
+                      latest.v >= 300 ? 'text-emerald-700' :
+                      latest.v >= 50 ? 'text-amber-700' :
+                      'text-red-700'
+                    }`}>
+                      Current: {latest.v.toFixed(0)} cfs — {
+                        latest.v >= 300 ? 'Full diversion available' :
+                        latest.v >= 50 ? `Partial diversion (${Math.max(0, latest.v - 50).toFixed(0)} cfs max)` :
+                        'Bypass requirement not met'
+                      }
+                    </p>
+                  )}
+                </div>
+              ) : isRiver ? (
+                <p>
+                  River flows monitored for settlement compliance. Key metric for water availability
+                  and downstream user protections under the WSA.
+                </p>
+              ) : (
+                <p>
+                  Pools are compared to conservation storage; alerts follow the settlement tiers (watch, warning, critical) set off of the pool percentage bands.
+                </p>
+              )}
+            </div>
 
             {/* Chart */}
             <div className="rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 shadow-inner">
@@ -456,7 +481,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
                 />
                 <a
                   className="font-semibold text-blue-600 hover:underline"
-                  href={`https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
+                  href={waterBody.usgsUrl || `https://waterdata.usgs.gov/monitoring-location/USGS-${usgsId}/`}
                   target="_blank"
                   rel="noreferrer"
                 >

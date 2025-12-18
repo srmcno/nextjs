@@ -10,6 +10,11 @@
  * - Bureau of Reclamation
  * - USGS National Water Information System
  * - Choctaw-Chickasaw Nations Water Settlement Act (2016, WIIN Act)
+ *
+ * Data Sources (Live):
+ * - USGS Water Services: https://waterservices.usgs.gov/
+ * - USACE Tulsa District: https://www.swt-wc.usace.army.mil/
+ * - OWRB Reservoir Storage: https://owrb.ok.gov/supply/drought/Lake_Levels_files/Monthly%20Reservoir%20Storage.pdf
  */
 
 export type WaterBodyType = 'reservoir' | 'river' | 'lake'
@@ -20,6 +25,10 @@ export interface WaterBody {
   name: string
   type: WaterBodyType
   usgsId: string
+  /** Direct link to USGS monitoring page */
+  usgsUrl?: string
+  /** USACE station ID for additional data */
+  usaceId?: string
   /** Conservation pool elevation in feet (for reservoirs/lakes) */
   conservationPool?: number
   /** Top of flood pool elevation in feet */
@@ -30,6 +39,10 @@ export interface WaterBody {
   topOfDam?: number
   /** Minimum level before OKC withdrawal restrictions apply (for Sardis) */
   withdrawalMinimum?: number
+  /** Bypass flow requirement in cfs (for rivers at diversion points) */
+  bypassRequirement?: number
+  /** Storage capacity in acre-feet */
+  storageCapacity?: number
   /** Description of the water body */
   description: string
   /** County location */
@@ -37,7 +50,7 @@ export interface WaterBody {
   /** Whether this is a critical settlement water body */
   isSettlementCritical: boolean
   /** Managing agency */
-  agency: 'USACE' | 'BOR' | 'USGS' | 'State'
+  agency: 'USACE' | 'BOR' | 'USGS' | 'State' | 'OKC'
   /** Parameter code: 00065 = gage height, 00060 = discharge, 62614 = reservoir elevation (NGVD29) */
   parameterCode: '00065' | '00060' | '62614'
 }
@@ -75,12 +88,15 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     name: 'Sardis Lake',
     type: 'reservoir',
     usgsId: '07335775',
+    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07335775/',
+    usaceId: 'SARDO2',
     conservationPool: 599,
     floodPoolTop: 607,
     streambed: 530,
     topOfDam: 631,
     withdrawalMinimum: 590,
-    description: 'Critical reservoir for the water settlement. Oklahoma City has storage rights but withdrawals are restricted based on lake levels to protect recreation, fish, and wildlife.',
+    storageCapacity: 297200, // Total conservation storage
+    description: 'CRITICAL: Central reservoir for the water settlement. Total conservation storage: 297,200 AF. OKC has 116,616 AF (39%). Seasonal release restrictions apply per WSA Section 6.',
     county: 'Pushmataha/Latimer',
     isSettlementCritical: true,
     agency: 'USACE',
@@ -91,11 +107,13 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     name: 'McGee Creek Reservoir',
     type: 'reservoir',
     usgsId: '07333900',
-    conservationPool: 577,
+    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07333900/',
+    conservationPool: 577.1,
     floodPoolTop: 595.5,
-    streambed: 461,
+    streambed: 533,
     topOfDam: 612,
-    description: 'Bureau of Reclamation reservoir providing water supply for Oklahoma City and Atoka.',
+    storageCapacity: 88445,
+    description: 'Bureau of Reclamation reservoir providing water supply for Oklahoma City. Part of the OKC 6-reservoir system per Exhibit 13.',
     county: 'Atoka',
     isSettlementCritical: true,
     agency: 'BOR',
@@ -178,17 +196,20 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
   },
   {
     id: 'atoka',
-    name: 'Atoka Lake',
+    name: 'Atoka Reservoir',
     type: 'reservoir',
-    usgsId: '07334200',
-    conservationPool: 582,
+    usgsId: '07333010',
+    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07333010/',
+    usaceId: 'ATKO2',
+    conservationPool: 590,
     floodPoolTop: 594,
-    streambed: 520,
+    streambed: 550,
     topOfDam: 610,
-    description: 'Primary water supply reservoir for Oklahoma City via pipeline.',
+    storageCapacity: 107940,
+    description: 'Primary water supply reservoir for Oklahoma City via pipeline. Part of the OKC 6-reservoir system per Exhibit 13.',
     county: 'Atoka',
     isSettlementCritical: true,
-    agency: 'State',
+    agency: 'OKC',
     parameterCode: '00065'
   },
   // ===== KIAMICHI RIVER MONITORING STATIONS =====
@@ -197,8 +218,22 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     name: 'Kiamichi River near Big Cedar',
     type: 'river',
     usgsId: '07335700',
+    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07335700/',
     description: 'Upper Kiamichi River monitoring station. Critical for tracking river flows that feed Sardis Lake.',
     county: 'Le Flore',
+    isSettlementCritical: true,
+    agency: 'USGS',
+    parameterCode: '00060'
+  },
+  {
+    id: 'kiamichi-moyers',
+    name: 'Kiamichi River at Moyers',
+    type: 'river',
+    usgsId: '07336500',
+    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07336500/',
+    bypassRequirement: 50, // 50 cfs must bypass when City is diverting
+    description: 'CRITICAL: Point of Diversion for Oklahoma City. Per WSA, 50 cfs must bypass when City diverts up to 250 cfs. Total flow required: 300 cfs.',
+    county: 'Pushmataha',
     isSettlementCritical: true,
     agency: 'USGS',
     parameterCode: '00060'
@@ -208,6 +243,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     name: 'Kiamichi River near Antlers',
     type: 'river',
     usgsId: '07336200',
+    usgsUrl: 'https://waterdata.usgs.gov/monitoring-location/USGS-07336200/',
     description: 'Mid-Kiamichi River monitoring station. Key location for streamflow monitoring under the settlement.',
     county: 'Pushmataha',
     isSettlementCritical: true,
