@@ -1,118 +1,91 @@
 import { NextResponse } from 'next/server'
-import { getMockData } from '@/lib/mockData'
 
-// Parameter code descriptions for better error messages
-const PARAMETER_CODES = {
-  '00065': 'Gage Height (ft)',
-  '00060': 'Discharge (cfs)',
-  '62614': 'Reservoir Elevation, NGVD29 (ft)'
-} as const
+// The Official USACE CWMS Data API (CDA) Endpoint
+const BASE_URL = 'https://cwms-data.usace.army.mil/cwms-data/timeseries'
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
+// Time Series ID Patterns to try
+// USACE uses complex IDs like "CYDO2.Elev.Inst.1Hour.0.Ccp-Rev"
+const PATTERNS = [
+  // Most common for "Current" data
+  (id: string, param: string) => `${id}.${param}.Inst.1Hour.0.Ccp-Rev`,
+  // Sometimes marked as Revised-Regulated
+  (id: string, param: string) => `${id}.${param}.Inst.1Hour.0.Rev-Regi`,
+  // Raw USGS feed often mirrored by USACE
+  (id: string, param: string) => `${id}.${param}.Inst.1Hour.0.Usgs-Raw`,
+  // Raw USACE feed
+  (id: string, param: string) => `${id}.${param}.Inst.1Hour.0.Raw`,
+  // 15 Minute intervals (common for precip/stage, less for elev)
+  (id: string, param: string) => `${id}.${param}.Inst.15Minutes.0.Ccp-Rev`,
+  (id: string, param: string) => `${id}.${param}.Inst.15Minutes.0.Usgs-Raw`,
+]
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
   const site = searchParams.get('site')
-  const param = searchParams.get('param') || '00065' // Default to gage height
-  const useMock = searchParams.get('mock') === 'true'
+  const param = searchParams.get('param') // 'Elev', 'Stage', 'Flow'
 
-  if (!site) {
-    return NextResponse.json(
-      { error: 'Missing required parameter', details: 'Site ID is required (?site=XXXXXXXX)' },
-      { status: 400 }
-    )
+  if (!site || !param) {
+    return NextResponse.json({ error: 'Missing site or param' }, { status: 400 })
   }
 
-  // Validate parameter code
-  const validParams = Object.keys(PARAMETER_CODES)
-  if (!validParams.includes(param)) {
-    return NextResponse.json(
-      {
-        error: 'Invalid parameter code',
-        details: `Use one of: ${validParams.join(', ')}`,
-        parameterCodes: PARAMETER_CODES
-      },
-      { status: 400 }
-    )
-  }
+  // Define Time Window (Last 7 days)
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - 7)
 
-  // Force mock data if requested
-  if (useMock) {
-    const mockData = getMockData(site, param)
-    if (mockData) {
-      return NextResponse.json(mockData, {
+  // Use encoded URI components for the timestamps
+  const beginStr = start.toISOString()
+  const endStr = end.toISOString()
+
+  let lastError = null
+
+  // Try each pattern until we get data
+  for (const makeId of PATTERNS) {
+    const tsId = makeId(site, param)
+    const url = `${BASE_URL}?office=SWT&name=${encodeURIComponent(tsId)}&begin=${encodeURIComponent(beginStr)}&end=${encodeURIComponent(endStr)}&page-size=500`
+
+    try {
+      const res = await fetch(url, {
         headers: {
-          'Cache-Control': 's-maxage=300, stale-while-revalidate=600',
-          'X-Data-Source': 'mock-demo',
-          'X-Data-Reason': 'mock-requested'
-        }
+          'Accept': 'application/json;version=2' // Version 2 is standard for CDA
+        },
+        next: { revalidate: 300 } // Cache for 5 mins
       })
-    }
-  }
 
-  const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${encodeURIComponent(
-    site
-  )}&parameterCd=${param}`
-
-  try {
-    // Try to fetch real data first (with timeout)
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
-
-    const res = await fetch(url, {
-      next: { revalidate: 60 }, // Cache for 60 seconds
-      signal: controller.signal
-    })
-
-    clearTimeout(timeoutId)
-
-    if (!res.ok) {
-      console.warn(`USGS API error: ${res.status} ${res.statusText} for site ${site}`)
-      throw new Error(`USGS API returned ${res.status}`)
-    }
-
-    const data = await res.json()
-
-    // Check if we got valid data
-    if (!data?.value?.timeSeries || data.value.timeSeries.length === 0) {
-      console.warn(`No data available from USGS for site ${site}, param ${param}`)
-      throw new Error('No data available from USGS API')
-    }
-
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 's-maxage=60, stale-while-revalidate=120',
-        'X-Data-Source': 'usgs-live',
-        'X-Site-ID': site,
-        'X-Parameter': param
+      if (!res.ok) {
+        // 404 means this specific TS ID doesn't exist, try next
+        continue
       }
-    })
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error(`USGS API error for site ${site}: ${errorMessage}. Falling back to mock data.`)
 
-    // Fallback to mock data
-    const mockData = getMockData(site, param)
+      const data = await res.json()
 
-    if (mockData) {
-      return NextResponse.json(mockData, {
-        headers: {
-          'Cache-Control': 's-maxage=300, stale-while-revalidate=600',
-          'X-Data-Source': 'mock-demo',
-          'X-Data-Reason': errorMessage.includes('403') ? 'usgs-blocked' : 'usgs-unavailable',
-          'X-Site-ID': site,
-          'X-Parameter': param
-        }
-      })
+      // Ensure we have values
+      if (data.values && Array.isArray(data.values) && data.values.length > 0) {
+        // Transform to our standard format
+        const formattedValues = data.values.map((v: [number, number, number]) => ({
+            // v[0] is timestamp (ms), v[1] is value, v[2] is quality code
+            dateTime: new Date(v[0]).toISOString(),
+            value: v[1]
+        })).filter((v: any) => v.value !== null)
+
+        if (formattedValues.length === 0) continue
+
+        return NextResponse.json({
+          source: 'usace-cwms',
+          tsId: tsId,
+          values: formattedValues,
+          units: data.units
+        })
+      }
+
+    } catch (e) {
+      console.error(`USACE API Error for ${tsId}:`, e)
+      lastError = e
     }
-
-    return NextResponse.json(
-      {
-        error: 'Data unavailable',
-        details: 'Failed to fetch USGS data and no mock data available',
-        site,
-        parameter: param,
-        parameterName: PARAMETER_CODES[param as keyof typeof PARAMETER_CODES]
-      },
-      { status: 503 }
-    )
   }
+
+  return NextResponse.json(
+    { error: 'Data unavailable from USACE API', details: lastError },
+    { status: 404 }
+  )
 }
