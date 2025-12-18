@@ -21,7 +21,7 @@ export default function Header() {
           <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/20">
             <img 
               src="image_0.png" 
-              alt="Choctaw and Chickasaw Nations Seals" 
+              alt="Choctaw Nation Seal" 
               className="h-8 w-8 object-contain" 
             />
           </div>
