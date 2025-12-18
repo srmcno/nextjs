@@ -5,149 +5,138 @@ import {
   OKC_RESERVOIR_SYSTEM,
   calculateCombinedStorage,
   determineWSADroughtCondition,
-  getSardisMinimumElevation,
-  getWithdrawalRestrictionMessage,
-  getDroughtConditionDisplay,
-  TOTAL_SYSTEM_CAPACITY,
-  SARDIS_STORAGE_ALLOCATION,
-  CITY_PERMIT,
-  calculateReservoirPercentage,
-  type DroughtCondition
+  getSardisRestriction,
+  getDroughtConditionDisplay
 } from '../lib/okcReservoirSystem'
 
-// ... (imports remain the same, just showing the render updates)
+export default function OKCSystemStatus() {
+  const [elevations, setElevations] = useState<Map<string, number>>(new Map())
+  const [loading, setLoading] = useState(true)
 
-// Use the existing logic but improve the JSX return:
+  // Fetch logic for all 6 City Reservoirs
+  useEffect(() => {
+    async function fetchAll() {
+      const newElevs = new Map<string, number>()
+      
+      await Promise.all(OKC_RESERVOIR_SYSTEM.map(async (res) => {
+        try {
+          // Priority: USACE API if ID exists (Canton, Atoka, McGee) -> USGS API fallback
+          let val: number | null = null
+          
+          if (res.usaceId) {
+             try {
+               const r = await fetch(`/api/usace?site=${res.usaceId}&param=Elev`)
+               const d = await r.json()
+               if (d.values?.length) val = d.values[d.values.length - 1].value
+             } catch(e) {}
+          }
 
-// ... inside the component ...
-  // [Keep the useEffect logic exactly as it is in the original file]
+          if (val === null) {
+             const r = await fetch(`/api/usgs?site=${res.usgsId}&param=62614`) // 62614 = Elev
+             const d = await r.json()
+             // Extract USGS value logic...
+             const v = d?.value?.timeSeries?.[0]?.values?.[0]?.value
+             if (v?.length) val = Number(v[v.length - 1].value)
+          }
 
-  // [Update the Return JSX]
+          if (val !== null) newElevs.set(res.id, val)
+        } catch (e) {
+          console.error(`Failed to load ${res.name}`, e)
+        }
+      }))
+      
+      setElevations(newElevs)
+      setLoading(false)
+    }
+    fetchAll()
+  }, [])
+
+  // Calculations
+  const { totalStorage, percentage, details } = calculateCombinedStorage(elevations)
+  
+  // Extract critical lakes for Drought Trigger Logic
+  const hefner = details.find(d => d.id === 'hefner')?.percentFull || 100
+  const draper = details.find(d => d.id === 'draper')?.percentFull || 100
+  
+  const drought = determineWSADroughtCondition(percentage, hefner, draper)
+  const sardisRule = getSardisRestriction(drought.condition)
+  const display = getDroughtConditionDisplay(drought.condition)
+
+  if (loading) return <div className="animate-pulse h-64 bg-slate-100 rounded-2xl"></div>
+
   return (
-    <div className={`rounded-2xl border ${droughtDisplay.borderColor} bg-white shadow-sm overflow-hidden`}>
-      {/* STATUS HEADER */}
-      <div className={`px-6 py-4 ${droughtDisplay.bgColor} border-b ${droughtDisplay.borderColor}`}>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-             <h3 className="text-lg font-bold text-slate-900">OKC System Combined Storage</h3>
-             <p className="text-xs text-slate-600">Settlement Agreement Exhibit 13 Calculation</p>
-          </div>
-          <span className={`self-start sm:self-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider bg-white/80 border ${droughtDisplay.borderColor} ${droughtDisplay.color}`}>
-             {droughtDisplay.label} Status
-          </span>
+    <div className={`rounded-2xl border ${display.borderColor} bg-white shadow-sm overflow-hidden`}>
+      <div className={`px-6 py-4 ${display.bgColor} border-b ${display.borderColor} flex justify-between items-center`}>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">OKC System Combined Storage</h3>
+          <p className="text-xs text-slate-600">Settlement Agreement Exhibit 13 Calculation</p>
         </div>
+        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${display.color} bg-white/80 border ${display.borderColor}`}>
+          {display.label}
+        </span>
       </div>
 
       <div className="p-6">
-        {/* MAIN PROGRESS BAR */}
-        <div className="mb-8">
-           <div className="flex items-end justify-between mb-2">
-              <div className="text-3xl font-black text-slate-900">
-                {combinedStorage.percentage.toFixed(1)}%
-                <span className="text-sm font-medium text-slate-500 ml-2">Total Capacity</span>
-              </div>
-              <div className="text-right text-xs font-medium text-slate-500">
-                {(combinedStorage.totalStorage / 1000).toFixed(1)}k / {(TOTAL_SYSTEM_CAPACITY / 1000).toFixed(1)}k AF
-              </div>
-           </div>
-           
-           <div className="relative h-6 w-full rounded-full bg-slate-100 ring-1 ring-slate-200 overflow-hidden">
-              {/* Threshold Markers */}
-              <div className="absolute top-0 bottom-0 z-10 w-0.5 bg-white mix-blend-overlay" style={{ left: '50%' }}></div>
-              <div className="absolute top-0 bottom-0 z-10 w-0.5 bg-white mix-blend-overlay" style={{ left: '65%' }}></div>
-              <div className="absolute top-0 bottom-0 z-10 w-0.5 bg-white mix-blend-overlay" style={{ left: '75%' }}></div>
-
-              {/* Fill */}
-              <div 
-                className={`h-full transition-all duration-1000 ease-out ${
-                  combinedStorage.percentage < 50 ? 'bg-rose-500' :
-                  combinedStorage.percentage < 65 ? 'bg-amber-500' :
-                  combinedStorage.percentage < 75 ? 'bg-yellow-400' :
-                  'bg-emerald-500'
-                }`}
-                style={{ width: `${combinedStorage.percentage}%` }}
-              ></div>
-           </div>
-           
-           <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
-             <span>0%</span>
-             <span className="text-rose-600">50% Critical</span>
-             <span className="text-amber-600">65% Warning</span>
-             <span className="text-yellow-600">75% Watch</span>
-             <span className="text-emerald-600">100% Full</span>
-           </div>
-        </div>
-
-        {/* INFO GRIDS */}
-        <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-6 sm:grid-cols-4">
-           {[
-             { label: 'System Storage', value: `${(combinedStorage.totalStorage / 1000).toFixed(1)}k`, unit: 'Ac-Ft' },
-             { label: 'OKC Annual Right', value: `${(CITY_PERMIT.annualAppropriation / 1000).toFixed(0)}k`, unit: 'AFY' },
-             { label: 'Sardis Share', value: '39%', unit: 'Allocated' },
-             { label: 'Drought Trigger', value: droughtCondition.meetsAllCriteria ? 'ACTIVE' : 'INACTIVE', unit: 'WSA Sec 6' },
-           ].map((stat, i) => (
-             <div key={i} className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-               <div className="text-xs text-slate-500 font-medium">{stat.label}</div>
-               <div className="text-lg font-bold text-slate-900">{stat.value}</div>
-               <div className="text-[10px] text-slate-400">{stat.unit}</div>
-             </div>
-           ))}
-        </div>
-
-        {/* DROUGHT DETAILS */}
-        {droughtCondition && (
-          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-            <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">WSA Drought Determination Criteria</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-               {[
-                 { label: 'Combined < 50%', met: droughtCondition.details.cumulativeMet },
-                 { label: 'Hefner < 50%', met: droughtCondition.details.hefnerMet },
-                 { label: 'Draper < 50%', met: droughtCondition.details.draperMet },
-               ].map((crit) => (
-                 <div key={crit.label} className={`flex items-center gap-2 rounded-lg p-2 text-xs font-bold border ${crit.met ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-white text-emerald-700 border-slate-200'}`}>
-                    <span className="text-base">{crit.met ? '⚠️' : '✓'}</span> {crit.label}
-                 </div>
-               ))}
-            </div>
-            <p className="mt-2 text-[10px] text-slate-400">
-              *All three conditions must be met to trigger drought provisions lowering the Sardis release floor.
-            </p>
+        <div className="mb-6">
+          <div className="flex justify-between items-end mb-2">
+            <span className="text-3xl font-black text-slate-900">{percentage.toFixed(1)}%</span>
+            <span className="text-xs font-medium text-slate-500">
+              {(totalStorage/1000).toFixed(1)}k / 407.1k AF
+            </span>
           </div>
-        )}
+          {/* Progress Bar */}
+          <div className="h-6 w-full bg-slate-100 rounded-full relative overflow-hidden ring-1 ring-slate-200">
+             <div className="absolute top-0 bottom-0 w-0.5 bg-white mix-blend-overlay z-10 left-[50%]" />
+             <div className="absolute top-0 bottom-0 w-0.5 bg-white mix-blend-overlay z-10 left-[65%]" />
+             <div className="absolute top-0 bottom-0 w-0.5 bg-white mix-blend-overlay z-10 left-[75%]" />
+             <div 
+               className={`h-full transition-all duration-1000 ${
+                 percentage < 50 ? 'bg-rose-500' : 
+                 percentage < 65 ? 'bg-amber-500' : 
+                 percentage < 75 ? 'bg-yellow-400' : 'bg-emerald-500'
+               }`}
+               style={{ width: `${percentage}%` }}
+             />
+          </div>
+          <div className="flex justify-between text-[10px] text-slate-400 mt-1 font-bold uppercase">
+            <span>0%</span>
+            <span className="text-rose-600">50% Critical</span>
+            <span className="text-amber-600">65% Warning</span>
+            <span className="text-yellow-600">75% Watch</span>
+            <span className="text-emerald-600">100% Full</span>
+          </div>
+        </div>
 
-        {/* RESTRICTION ALERT */}
-        {sardisRestriction && (
-           <div className={`mt-6 flex gap-3 rounded-xl border p-4 ${sardisRestriction.isDroughtOverride ? 'bg-amber-50 border-amber-200' : 'bg-sky-50 border-sky-200'}`}>
-              <div className="text-2xl">{sardisRestriction.isDroughtOverride ? '⚠️' : 'ℹ️'}</div>
-              <div>
-                 <div className="font-bold text-slate-900 text-sm">Sardis Release Minimum: {sardisRestriction.minimumElevation}' MSL</div>
-                 <p className="text-xs text-slate-600 mt-1">{sardisRestriction.reason}</p>
+        {/* Drought Trigger Detail Box */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 mb-4">
+           <h4 className="text-xs font-bold uppercase text-slate-500 mb-3">Drought Trigger Status (All 3 Must be Met)</h4>
+           <div className="grid grid-cols-3 gap-2 text-center">
+              <div className={`p-2 rounded border ${drought.details.cumulativeMet ? 'bg-red-50 border-red-200 text-red-700' : 'bg-white border-slate-200 text-slate-400'}`}>
+                 <div className="text-[10px] uppercase font-bold">System</div>
+                 <div className="font-bold">{percentage.toFixed(0)}%</div>
+              </div>
+              <div className={`p-2 rounded border ${drought.details.hefnerMet ? 'bg-red-50 border-red-200 text-red-700' : 'bg-white border-slate-200 text-slate-400'}`}>
+                 <div className="text-[10px] uppercase font-bold">Hefner</div>
+                 <div className="font-bold">{hefner.toFixed(0)}%</div>
+              </div>
+              <div className={`p-2 rounded border ${drought.details.draperMet ? 'bg-red-50 border-red-200 text-red-700' : 'bg-white border-slate-200 text-slate-400'}`}>
+                 <div className="text-[10px] uppercase font-bold">Draper</div>
+                 <div className="font-bold">{draper.toFixed(0)}%</div>
               </div>
            </div>
-        )}
-      </div>
-      
-      {/* INDIVIDUAL RESERVOIRS TOGGLE */}
-      <details className="border-t border-slate-200 bg-slate-50">
-        <summary className="cursor-pointer px-6 py-3 text-xs font-bold uppercase tracking-wide text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
-          View Individual Reservoir Breakdown ↓
-        </summary>
-        <div className="p-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-           {reservoirData.map(r => (
-             <div key={r.id} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                <div className="flex justify-between mb-2">
-                   <span className="font-bold text-sm text-slate-700">{r.name}</span>
-                   <span className={`text-xs font-bold ${
-                     (r.percentage||0) > 75 ? 'text-emerald-600' : (r.percentage||0) > 50 ? 'text-amber-600' : 'text-rose-600'
-                   }`}>{(r.percentage||0).toFixed(0)}%</span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                   <div className="h-full bg-slate-400 rounded-full" style={{width: `${r.percentage}%`}}></div>
-                </div>
-             </div>
-           ))}
         </div>
-      </details>
+
+        {/* Sardis Restriction Output */}
+        <div className={`flex items-start gap-3 p-4 rounded-xl border ${sardisRule.isDroughtOverride ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
+           <span className="text-xl">{sardisRule.isDroughtOverride ? '⚠️' : 'ℹ️'}</span>
+           <div>
+              <div className="text-sm font-bold text-slate-900">
+                Sardis Release Floor: {sardisRule.minimumElevation}' MSL
+              </div>
+              <div className="text-xs text-slate-600 mt-0.5">{sardisRule.reason}</div>
+           </div>
+        </div>
+      </div>
     </div>
   )
 }
