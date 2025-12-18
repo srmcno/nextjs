@@ -11,7 +11,7 @@ import DroughtMeter from '../../components/DroughtMeter'
 import SettlementMap from '../../components/SettlementMap'
 import WaterManagerGame from '../../components/WaterManagerGame'
 import LawnWateringWidget from '../../components/LawnWateringWidget'
-import { SETTLEMENT_WATER_BODIES, getReservoirs, getRivers, WaterBody } from '../../lib/waterBodies'
+import { SETTLEMENT_WATER_BODIES, WaterBody } from '../../lib/waterBodies'
 
 export default function DashboardPage() {
   const allWaterBodies = SETTLEMENT_WATER_BODIES
@@ -64,7 +64,7 @@ export default function DashboardPage() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'monitoring' | 'tools' | 'learn')}
                 className={`flex-shrink-0 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'bg-slate-900 text-white'

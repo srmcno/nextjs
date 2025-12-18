@@ -156,7 +156,7 @@ export const MOCK_WATER_DATA: Record<string, { parameterCode: string; data: Mock
   }
 }
 
-export function getMockData(siteId: string, parameterCode: string) {
+export function getMockData(siteId: string) {
   const mockSite = MOCK_WATER_DATA[siteId]
 
   if (!mockSite) {

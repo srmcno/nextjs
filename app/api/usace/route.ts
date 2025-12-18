@@ -67,8 +67,8 @@ export async function GET(request: Request) {
       if (data.values && data.values.length > 0) {
         // Filter out null values and format
         const cleanValues = data.values
-          .filter((v: any[]) => v[1] !== null)
-          .map((v: any[]) => ({
+          .filter((v: [number, number | null]) => v[1] !== null)
+          .map((v: [number, number | null]) => ({
             dateTime: new Date(v[0]).toISOString(),
             value: v[1]
           }))

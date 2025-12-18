@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { SARDIS_WITHDRAWAL_THRESHOLDS, ALERT_THRESHOLDS } from '../../lib/waterBodies'
@@ -278,12 +279,12 @@ export default function SettlementPage() {
             <p className="mt-2 text-white/90">
               Monitor real-time water levels for all settlement water bodies using official USGS data.
             </p>
-            <a
+            <Link
               href="/"
               className="mt-6 inline-block rounded-xl bg-white px-6 py-3 font-semibold text-slate-900 shadow-lg transition-transform hover:scale-105"
             >
               Go to Dashboard
-            </a>
+            </Link>
           </div>
         </section>
       </main>

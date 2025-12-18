@@ -15,26 +15,22 @@ export default function DroughtMeter({ percentage, hefnerPct, draperPct }: Droug
   let statusLabel = 'No Restrictions'
   let statusDescription = 'Water lawns as normal. System operating at healthy levels.'
   let statusColor = 'text-emerald-600'
-  let meterColor = '#10b981'
-  
+
   if (allBelowThreshold(50)) {
     status = 'extreme'
     statusLabel = 'Mandatory Rationing'
     statusDescription = 'Severe water restrictions in effect. No outdoor watering. Essential use only.'
     statusColor = 'text-rose-600'
-    meterColor = '#ef4444'
   } else if (allBelowThreshold(65)) {
     status = 'advanced'
     statusLabel = 'Significant Restrictions'
     statusDescription = 'Limit outdoor water use. Hand watering only. No car washing.'
     statusColor = 'text-amber-600'
-    meterColor = '#f59e0b'
   } else if (allBelowThreshold(75)) {
     status = 'moderate'
     statusLabel = 'Odd/Even Watering'
     statusDescription = 'Water lawns on odd/even days based on your address. Conserve when possible.'
     statusColor = 'text-yellow-600'
-    meterColor = '#eab308'
   }
 
   // Calculate rotation for speedometer needle (-135 to 135 degrees = 270 degree range)

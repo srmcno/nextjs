@@ -2,12 +2,10 @@
 
 interface CantonTransitLossProps {
   rawStorageAF: number
-  elevation?: number
 }
 
-export default function CantonTransitLoss({ rawStorageAF, elevation }: CantonTransitLossProps) {
+export default function CantonTransitLoss({ rawStorageAF }: CantonTransitLossProps) {
   const TRANSIT_LOSS_FACTOR = 0.30 // 30% loss per Exhibit 13
-  const lossAF = rawStorageAF * TRANSIT_LOSS_FACTOR
   const cityStorageAF = rawStorageAF * (1 - TRANSIT_LOSS_FACTOR)
   
   const CANTON_MAX_LIVE = 97176 // Raw live storage capacity
@@ -21,7 +19,7 @@ export default function CantonTransitLoss({ rawStorageAF, elevation }: CantonTra
       <div className="bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-4 text-white">
         <h3 className="text-lg font-bold">Canton Lake: Transit Loss Explained</h3>
         <p className="mt-1 text-sm text-amber-100">
-          Why "City Storage" differs from "Total Storage"
+          Why &quot;City Storage&quot; differs from &quot;Total Storage&quot;
         </p>
       </div>
 
@@ -29,8 +27,8 @@ export default function CantonTransitLoss({ rawStorageAF, elevation }: CantonTra
         {/* Visual Explanation */}
         <div className="rounded-xl bg-amber-50 p-4 mb-5">
           <p className="text-sm text-amber-900">
-            <strong>Per Exhibit 13:</strong> When calculating OKC's system storage, Canton Lake's 
-            capacity is reduced by <strong>30%</strong> to account for water lost during the 
+            <strong>Per Exhibit 13:</strong> When calculating OKC&apos;s system storage, Canton Lake&apos;s
+            capacity is reduced by <strong>30%</strong> to account for water lost during the
             150+ mile journey from Canton to Oklahoma City via the North Canadian River and pipelines.
           </p>
         </div>
@@ -43,7 +41,7 @@ export default function CantonTransitLoss({ rawStorageAF, elevation }: CantonTra
               <span className="text-2xl">🌊</span>
               <div>
                 <div className="text-xs font-bold uppercase text-slate-500">Total Storage</div>
-                <div className="text-xs text-slate-400">(What you'd see on USACE)</div>
+                <div className="text-xs text-slate-400">(What you&apos;d see on USACE)</div>
               </div>
             </div>
             
@@ -168,9 +166,9 @@ export default function CantonTransitLoss({ rawStorageAF, elevation }: CantonTra
             <span>💡</span> Why This Matters
           </h4>
           <p className="mt-2 text-sm text-blue-700">
-            When calculating whether OKC is in a "Drought Condition" per the Settlement Agreement, 
-            only <strong>{(cityStorageAF / 1000).toFixed(1)}k AF</strong> (not {(rawStorageAF / 1000).toFixed(1)}k AF) 
-            counts toward the 407,105 AF system total. This ensures the drought triggers accurately 
+            When calculating whether OKC is in a &quot;Drought Condition&quot; per the Settlement Agreement,
+            only <strong>{(cityStorageAF / 1000).toFixed(1)}k AF</strong> (not {(rawStorageAF / 1000).toFixed(1)}k AF)
+            counts toward the 407,105 AF system total. This ensures the drought triggers accurately
             reflect water actually available to OKC residents.
           </p>
         </div>
