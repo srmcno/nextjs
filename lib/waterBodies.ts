@@ -26,7 +26,7 @@ export const ALERT_THRESHOLDS = {
   normal: 95,   // ≥95% of conservation pool
   watch: 85,    // 85-95% of conservation pool
   warning: 75,  // 75-85% of conservation pool
-  critical: 75  // <75% of conservation pool
+  critical: 65  // <75% of conservation pool (below 65% is critical)
 }
 
 /**

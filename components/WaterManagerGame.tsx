@@ -90,7 +90,7 @@ export default function WaterManagerGame() {
       if (newState.okcSatisfaction >= 50 && newState.localSatisfaction >= 50) {
         newState.gameOver = true
         newState.outcome = 'win'
-        newEvents.push('🎊 WEEK COMPLETE! You balanced everyone needs successfully!')
+        newEvents.push('🎊 WEEK COMPLETE! You balanced everyone\'s needs successfully!')
       } else if (newState.okcSatisfaction < 30) {
         newState.gameOver = true
         newState.outcome = 'okc-angry'

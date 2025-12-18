@@ -164,21 +164,20 @@ export function determineWSADroughtCondition(
     hefnerPct: number
     draperPct: number
     thresholds: { moderate: number; advanced: number; extreme: number }
-    cumulativeMet: boolean
+    systemMet: boolean
     hefnerMet: boolean
     draperMet: boolean
   }
 } {
   // Check if each component meets a specific threshold
   const checkThreshold = (threshold: number) => ({
-    cumulative: systemPct < threshold,
+    system: systemPct < threshold,
     hefner: hefnerPct < threshold,
     draper: draperPct < threshold,
     all: systemPct < threshold && hefnerPct < threshold && draperPct < threshold
   })
 
   let condition: DroughtCondition = 'none'
-  let activeThreshold = 100 // default (no drought)
 
   // Check from most severe to least
   if (checkThreshold(50).all) {
@@ -204,7 +203,7 @@ export function determineWSADroughtCondition(
       hefnerPct,
       draperPct,
       thresholds: { moderate: 75, advanced: 65, extreme: 50 },
-      cumulativeMet: systemPct < nextThreshold,
+      systemMet: systemPct < nextThreshold,
       hefnerMet: hefnerPct < nextThreshold,
       draperMet: draperPct < nextThreshold
     }

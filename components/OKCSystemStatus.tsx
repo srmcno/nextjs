@@ -157,7 +157,7 @@ export default function OKCSystemStatus() {
           {/* Always visible: Quick status */}
           <div className="flex items-center gap-2 mt-2">
             {[
-              { label: 'System', value: percentage, met: drought.details.cumulativeMet },
+              { label: 'System', value: percentage, met: drought.details.systemMet },
               { label: 'Hefner', value: hefner, met: drought.details.hefnerMet },
               { label: 'Draper', value: draper, met: drought.details.draperMet }
             ].map((item) => (
