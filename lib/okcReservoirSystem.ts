@@ -159,17 +159,43 @@ export function determineWSADroughtCondition(
   draperPct: number
 ): {
   condition: DroughtCondition,
-  details: any
+  details: {
+    systemPct: number
+    hefnerPct: number
+    draperPct: number
+    thresholds: { moderate: number; advanced: number; extreme: number }
+    cumulativeMet: boolean
+    hefnerMet: boolean
+    draperMet: boolean
+  }
 } {
-  const check = (threshold: number) => 
-    systemPct < threshold && hefnerPct < threshold && draperPct < threshold
+  // Check if each component meets a specific threshold
+  const checkThreshold = (threshold: number) => ({
+    cumulative: systemPct < threshold,
+    hefner: hefnerPct < threshold,
+    draper: draperPct < threshold,
+    all: systemPct < threshold && hefnerPct < threshold && draperPct < threshold
+  })
 
   let condition: DroughtCondition = 'none'
+  let activeThreshold = 100 // default (no drought)
 
   // Check from most severe to least
-  if (check(50)) condition = 'extreme'
-  else if (check(65)) condition = 'advanced'
-  else if (check(75)) condition = 'moderate'
+  if (checkThreshold(50).all) {
+    condition = 'extreme'
+    activeThreshold = 50
+  } else if (checkThreshold(65).all) {
+    condition = 'advanced'
+    activeThreshold = 65
+  } else if (checkThreshold(75).all) {
+    condition = 'moderate'
+    activeThreshold = 75
+  }
+
+  // For display purposes, show which components are currently below the next threshold
+  const nextThreshold = condition === 'none' ? 75 : 
+                        condition === 'moderate' ? 65 : 
+                        condition === 'advanced' ? 50 : 50
 
   return {
     condition,
@@ -177,7 +203,10 @@ export function determineWSADroughtCondition(
       systemPct,
       hefnerPct,
       draperPct,
-      thresholds: { moderate: 75, advanced: 65, extreme: 50 }
+      thresholds: { moderate: 75, advanced: 65, extreme: 50 },
+      cumulativeMet: systemPct < nextThreshold,
+      hefnerMet: hefnerPct < nextThreshold,
+      draperMet: draperPct < nextThreshold
     }
   }
 }
@@ -216,4 +245,48 @@ export function getSardisRestriction(
   
   // Winter: Sep 1 - Mar 31
   return { minimumElevation: 595.0, reason: 'Winter Baseline (Sep-Mar)', isDroughtOverride: false }
+}
+
+/**
+ * Display configuration for drought conditions
+ */
+export function getDroughtConditionDisplay(condition: DroughtCondition) {
+  switch (condition) {
+    case 'extreme':
+      return {
+        label: 'Extreme Drought',
+        color: 'text-rose-700',
+        bgColor: 'bg-rose-50',
+        borderColor: 'border-rose-200',
+        description: 'Mandatory water rationing in effect. Severe restrictions apply.',
+        icon: '🚨'
+      }
+    case 'advanced':
+      return {
+        label: 'Advanced Drought',
+        color: 'text-amber-700',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-200',
+        description: 'Significant restrictions. Limit outdoor water use.',
+        icon: '⚠️'
+      }
+    case 'moderate':
+      return {
+        label: 'Moderate Drought',
+        color: 'text-yellow-700',
+        bgColor: 'bg-yellow-50',
+        borderColor: 'border-yellow-200',
+        description: 'Odd/even watering schedule likely. Conserve when possible.',
+        icon: '⚡'
+      }
+    default:
+      return {
+        label: 'Normal Conditions',
+        color: 'text-emerald-700',
+        bgColor: 'bg-emerald-50',
+        borderColor: 'border-emerald-200',
+        description: 'No restrictions. System operating normally.',
+        icon: '✅'
+      }
+  }
 }
