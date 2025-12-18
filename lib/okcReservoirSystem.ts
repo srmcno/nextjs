@@ -178,7 +178,7 @@ export function determineWSADroughtCondition(
   })
 
   let condition: DroughtCondition = 'none'
-
+  let activeThreshold = 0;
   // Check from most severe to least
   if (checkThreshold(50).all) {
     condition = 'extreme'
