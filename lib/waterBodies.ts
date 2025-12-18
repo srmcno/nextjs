@@ -3,42 +3,51 @@ export type WaterBodyType = 'reservoir' | 'river'
 export interface WaterBody {
   id: string
   name: string
-  // NWS/SHEF ID for USACE (e.g. CYDO2)
+  /** USACE / NWS SHEF ID (e.g. CYDO2) - Primary for Corps Lakes */
   usaceId?: string 
-  // USGS Site ID (fallback/reference)
+  /** USGS Site ID - Primary for City Lakes / Rivers */
   usgsId: string
   type: WaterBodyType
   county: string
-  // Parameter to fetch: 'Elev' for lakes, 'Flow'/'Stage' for rivers
+  /** Parameter to fetch: 'Elev' for lakes, 'Flow'/'Stage' for rivers */
   usaceParam?: 'Elev' | 'Stage' | 'Flow'
   parameterCode: string // USGS parameter code (00065 = gage height, 00060 = discharge)
-  conservationPool?: number // Top of conservation pool (ft)
-  streambed?: number // Elevation of streambed (ft)
-  floodPool?: number // Top of flood control pool
+  conservationPool?: number // Top of conservation pool (ft MSL)
+  streambed?: number // Elevation of streambed (ft MSL)
+  floodPool?: number // Top of flood control pool (ft MSL)
   description: string
   isSettlementCritical: boolean // If true, heavily regulated by settlement
 }
 
+/**
+ * Sardis Lake Withdrawal Constraints (Settlement Agreement Section 6.1.8)
+ */
 export const SARDIS_WITHDRAWAL_THRESHOLDS = {
   conservationPool: 599.0,
-  minimumForWithdrawal: 592.0, // Floor for OKC withdrawals
-  criticalLevel: 585.0 // Severe drought level
+  // Below these levels, OKC cannot release water unless drought conditions are met
+  baselineWinter: 595.0, // Sep 1 - Mar 31
+  baselineSummer: 599.0, // Apr 1 - Aug 31
+  
+  // Drought Release Floors (requires Drought Condition trigger)
+  moderateDroughtFloor: 597.0, // Jul 5 - Aug 31 only
+  advancedDroughtFloor: 592.0,
+  extremeDroughtFloor: 589.0
 }
 
 export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
   {
     id: 'sardis',
     name: 'Sardis Lake',
-    usaceId: 'CYDO2',
+    usaceId: 'CYDO2', // Official USACE ID
     usgsId: '07335775',
     type: 'reservoir',
     county: 'Pushmataha',
     usaceParam: 'Elev',
-    parameterCode: '62614', // Lake elevation
+    parameterCode: '62614',
     conservationPool: 599.0,
     streambed: 530.0,
     floodPool: 607.0,
-    description: 'The primary storage reservoir for the settlement agreement. Withdrawals are strictly limited based on lake levels.',
+    description: 'Primary settlement reservoir. Releases strictly regulated by lake level and drought conditions.',
     isSettlementCritical: true
   },
   {
@@ -51,9 +60,9 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     usaceParam: 'Elev',
     parameterCode: '62614',
     conservationPool: 404.5,
-    streambed: 370.0, // Approx
+    streambed: 370.0,
     floodPool: 437.5,
-    description: 'Located downstream of Sardis. Releases from Sardis often flow into Hugo Lake.',
+    description: 'Downstream of Sardis on the Kiamichi River. Managed by USACE.',
     isSettlementCritical: false
   },
   {
@@ -66,24 +75,24 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     usaceParam: 'Elev',
     parameterCode: '62614',
     conservationPool: 577.1,
-    streambed: 510.0, // Approx
+    streambed: 510.0,
     floodPool: 595.5,
-    description: 'A key water source for Oklahoma City, connected via the Atoka pipeline.',
+    description: 'Bureau of Reclamation project supplying OKC via Atoka pipeline.',
     isSettlementCritical: true
   },
   {
     id: 'atoka',
     name: 'Atoka Lake',
-    usaceId: 'ATKO2',
+    usaceId: 'ATKO2', // USACE often reports this even if City owned
     usgsId: '07333010',
     type: 'reservoir',
     county: 'Atoka',
     usaceParam: 'Elev',
     parameterCode: '62614',
     conservationPool: 590.0,
-    streambed: 530.0, // Approx
-    floodPool: 590.0, // Often kept at conservation
-    description: 'The primary terminal for the existing pipeline system. Heavily utilized by OKC.',
+    streambed: 530.0,
+    floodPool: 590.0,
+    description: 'Terminal reservoir for the Atoka pipeline. Key OKC supply point.',
     isSettlementCritical: false
   },
   {
@@ -98,22 +107,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     conservationPool: 599.5,
     streambed: 400.0,
     floodPool: 627.5,
-    description: 'Deep clear-water reservoir in the Mountain Fork river system. Vital for tourism.',
-    isSettlementCritical: false
-  },
-  {
-    id: 'pine-creek',
-    name: 'Pine Creek Lake',
-    usaceId: 'PC2O2',
-    usgsId: '07335300',
-    type: 'reservoir',
-    county: 'McCurtain',
-    usaceParam: 'Elev',
-    parameterCode: '62614',
-    conservationPool: 438.0,
-    streambed: 390.0,
-    floodPool: 480.0,
-    description: 'Located on the Little River, downstream of the upper Kiamichi basin.',
+    description: 'Mountain Fork river system. Vital for regional tourism and ecology.',
     isSettlementCritical: false
   },
   {
@@ -122,8 +116,8 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     usgsId: '07335790',
     type: 'river',
     county: 'Pushmataha',
-    parameterCode: '00060', // Discharge
-    description: 'Key stream gauge monitoring flows just downstream of Sardis Lake releases.',
+    parameterCode: '00060',
+    description: 'Monitors flows immediately downstream of Sardis Lake releases.',
     isSettlementCritical: true
   },
   {
@@ -133,7 +127,7 @@ export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
     type: 'river',
     county: 'Pushmataha',
     parameterCode: '00060',
-    description: 'Downstream monitor for the Kiamichi basin flows before reaching Hugo Lake.',
+    description: 'Key checkpoint for basin flow health before Hugo Lake.',
     isSettlementCritical: false
   }
 ]
@@ -146,24 +140,15 @@ export function getRivers() {
   return SETTLEMENT_WATER_BODIES.filter(wb => wb.type === 'river')
 }
 
-export function getWaterBody(id: string) {
-  return SETTLEMENT_WATER_BODIES.find(wb => wb.id === id)
-}
-
-// Alert levels based on conservation pool distance
+// Alert logic
 export type AlertLevel = 'normal' | 'watch' | 'warning' | 'critical'
 
 export function getAlertLevel(currentLevel: number, conservationPool: number): AlertLevel {
   const diff = currentLevel - conservationPool
-  
-  // If significantly above conservation (flood watch)
-  if (diff > 5) return 'watch'
-  
-  // If below conservation (drought watch)
+  if (diff > 5) return 'watch' // Flood watch
   if (diff < -2 && diff >= -5) return 'watch'
   if (diff < -5 && diff >= -10) return 'warning'
   if (diff < -10) return 'critical'
-  
   return 'normal'
 }
 
@@ -175,13 +160,9 @@ export function calculatePoolPercentage(current: number, conservation: number, s
 }
 
 export function getAlertMessage(wb: WaterBody, level: number): string | null {
-  if (wb.id === 'sardis' && level < SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal) {
-    return `Level is below settlement withdrawal threshold (${SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal}'). OKC withdrawals prohibited.`
+  // Sardis-specific settlement check
+  if (wb.id === 'sardis' && level < SARDIS_WITHDRAWAL_THRESHOLDS.baselineSummer) {
+    return `Level below Summer Baseline (${SARDIS_WITHDRAWAL_THRESHOLDS.baselineSummer}'). Withdrawals restricted unless drought declared.`
   }
-  
-  if (wb.conservationPool && level < wb.conservationPool - 5) {
-    return 'Level is significantly below conservation pool. Drought conditions likely.'
-  }
-
   return null
 }
