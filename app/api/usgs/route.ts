@@ -1,59 +1,90 @@
 import { NextResponse } from 'next/server'
 
-// Official USACE CWMS Data API
-const BASE_URL = 'https://cwms-data.usace.army.mil/cwms-data/timeseries'
+// Official USGS Water Services API
+const USGS_BASE_URL = 'https://waterservices.usgs.gov/nwis/iv/'
 
-// Strategy: Try standard Tulsa District (SWT) patterns
-const ID_PATTERNS = [
-  (id: string, param: string) => `${id}.${param}.Inst.1Hour.0.Ccp-Rev`,
-  (id: string, param: string) => `${id}.${param}.Inst.1Hour.0.Rev-Regi`,
-  (id: string, param: string) => `${id}.${param}.Inst.1Hour.0.Usgs-Raw`, // Fallback
-  (id: string, param: string) => `${id}.${param}.Inst.15Minutes.0.Ccp-Rev`
-]
+// Retry configuration
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 1000
+
+async function fetchWithRetry(url: string, retries = MAX_RETRIES): Promise<Response> {
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
+    
+    const res = await fetch(url, {
+      signal: controller.signal,
+      next: { revalidate: 300 } // Cache for 5 minutes
+    })
+    
+    clearTimeout(timeoutId)
+    return res
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS))
+      return fetchWithRetry(url, retries - 1)
+    }
+    throw error
+  }
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const site = searchParams.get('site') // e.g. CYDO2
-  const param = searchParams.get('param') // e.g. Elev
+  const site = searchParams.get('site')
+  const param = searchParams.get('param') // USGS parameter code (e.g., 00065 = gage height, 00060 = discharge)
 
-  if (!site || !param) return NextResponse.json({ error: 'Missing params' }, { status: 400 })
-
-  // Last 7 days
-  const end = new Date()
-  const start = new Date()
-  start.setDate(start.getDate() - 7)
-
-  // Try patterns until data is found
-  for (const pattern of ID_PATTERNS) {
-    const tsId = pattern(site, param)
-    const url = `${BASE_URL}?office=SWT&name=${encodeURIComponent(tsId)}&begin=${start.toISOString()}&end=${end.toISOString()}&page-size=500`
-
-    try {
-      const res = await fetch(url, {
-        headers: { 'Accept': 'application/json;version=2' },
-        next: { revalidate: 300 }
-      })
-      
-      if (!res.ok) continue
-
-      const data = await res.json()
-      if (data.values && data.values.length > 0) {
-        // Format to simplified structure
-        const cleanValues = data.values.map((v: any[]) => ({
-          dateTime: new Date(v[0]).toISOString(),
-          value: v[1]
-        }))
-        
-        return NextResponse.json({
-          source: 'usace',
-          tsId,
-          values: cleanValues
-        })
-      }
-    } catch (e) {
-      console.error(`USACE fetch failed for ${tsId}`, e)
-    }
+  if (!site) {
+    return NextResponse.json({ error: 'Missing site parameter' }, { status: 400 })
   }
 
-  return NextResponse.json({ error: 'Data not found' }, { status: 404 })
+  // Build USGS API URL
+  // Get last 7 days of instantaneous values
+  const url = new URL(USGS_BASE_URL)
+  url.searchParams.set('format', 'json')
+  url.searchParams.set('sites', site)
+  url.searchParams.set('period', 'P7D') // Last 7 days
+  if (param) {
+    url.searchParams.set('parameterCd', param)
+  }
+  url.searchParams.set('siteStatus', 'all')
+
+  try {
+    const res = await fetchWithRetry(url.toString())
+    
+    if (!res.ok) {
+      console.error(`USGS API returned ${res.status} for site ${site}`)
+      return NextResponse.json(
+        { error: 'USGS API error', status: res.status },
+        { 
+          status: res.status,
+          headers: { 'X-Data-Source': 'usgs-error' }
+        }
+      )
+    }
+
+    const data = await res.json()
+    
+    // Return the full USGS response structure
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'X-Data-Source': 'usgs-nwis',
+        'X-Site-ID': site
+      }
+    })
+  } catch (error) {
+    console.error(`USGS fetch failed for site ${site}:`, error)
+    
+    return NextResponse.json(
+      { 
+        error: 'Failed to fetch from USGS', 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        site 
+      },
+      { 
+        status: 503,
+        headers: { 'X-Data-Source': 'usgs-unavailable' }
+      }
+    )
+  }
 }

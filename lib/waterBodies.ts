@@ -20,6 +20,16 @@ export interface WaterBody {
 }
 
 /**
+ * Alert thresholds for pool percentage visualization
+ */
+export const ALERT_THRESHOLDS = {
+  normal: 95,   // ≥95% of conservation pool
+  watch: 85,    // 85-95% of conservation pool
+  warning: 75,  // 75-85% of conservation pool
+  critical: 65  // <75% of conservation pool (below 65% is critical)
+}
+
+/**
  * Sardis Lake Withdrawal Constraints (Settlement Agreement Section 6.1.8)
  */
 export const SARDIS_WITHDRAWAL_THRESHOLDS = {
@@ -31,7 +41,11 @@ export const SARDIS_WITHDRAWAL_THRESHOLDS = {
   // Drought Release Floors (requires Drought Condition trigger)
   moderateDroughtFloor: 597.0, // Jul 5 - Aug 31 only
   advancedDroughtFloor: 592.0,
-  extremeDroughtFloor: 589.0
+  extremeDroughtFloor: 589.0,
+  
+  // Legacy compatibility - using baselineWinter as minimum for general withdrawal checks
+  minimumForWithdrawal: 595.0, // Conservative floor (winter baseline)
+  criticalLevel: 589.0 // Extreme drought floor
 }
 
 export const SETTLEMENT_WATER_BODIES: WaterBody[] = [
@@ -165,4 +179,177 @@ export function getAlertMessage(wb: WaterBody, level: number): string | null {
     return `Level below Summer Baseline (${SARDIS_WITHDRAWAL_THRESHOLDS.baselineSummer}'). Withdrawals restricted unless drought declared.`
   }
   return null
+}
+
+/**
+ * Recreation Status - "Can I Go Boating?" Logic
+ */
+export type RecreationStatus = 'great' | 'caution' | 'poor'
+
+export interface RecreationInfo {
+  status: RecreationStatus
+  label: string
+  description: string
+  color: string
+  bgColor: string
+}
+
+export function getRecreationStatus(currentLevel: number, conservationPool: number): RecreationInfo {
+  const diff = currentLevel - conservationPool
+  
+  if (diff >= -2) {
+    return {
+      status: 'great',
+      label: 'Great for Boating',
+      description: 'Water levels are near normal. All boat ramps accessible.',
+      color: 'text-emerald-700',
+      bgColor: 'bg-emerald-50 border-emerald-200'
+    }
+  } else if (diff >= -5) {
+    return {
+      status: 'caution',
+      label: 'Use Caution',
+      description: 'Water level is low. Watch for submerged stumps. Some ramps may be tricky.',
+      color: 'text-amber-700',
+      bgColor: 'bg-amber-50 border-amber-200'
+    }
+  } else {
+    return {
+      status: 'poor',
+      label: 'Navigation Hazardous',
+      description: 'Very low water. Some ramps closed. Submerged hazards likely.',
+      color: 'text-rose-700',
+      bgColor: 'bg-rose-50 border-rose-200'
+    }
+  }
+}
+
+/**
+ * River Health Status - Basin Health for Fishermen
+ */
+export type RiverHealthStatus = 'low' | 'healthy' | 'high' | 'flood'
+
+export interface RiverHealthInfo {
+  status: RiverHealthStatus
+  label: string
+  description: string
+  color: string
+  bgColor: string
+  icon: string
+}
+
+export function getRiverHealthStatus(flowCfs: number): RiverHealthInfo {
+  if (flowCfs < 50) {
+    return {
+      status: 'low',
+      label: 'Low Flow',
+      description: 'Ecological stress. Fish may be concentrated in pools. Limited kayaking.',
+      color: 'text-amber-700',
+      bgColor: 'bg-amber-50 border-amber-200',
+      icon: '🏜️'
+    }
+  } else if (flowCfs < 100) {
+    return {
+      status: 'healthy',
+      label: 'Moderate Flow',
+      description: 'Adequate flow for aquatic life. Good fishing conditions.',
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-50 border-blue-200',
+      icon: '🎣'
+    }
+  } else if (flowCfs < 500) {
+    return {
+      status: 'healthy',
+      label: 'Healthy Flow',
+      description: 'Optimal conditions for ecosystem. Great for fishing and paddling.',
+      color: 'text-emerald-700',
+      bgColor: 'bg-emerald-50 border-emerald-200',
+      icon: '🛶'
+    }
+  } else if (flowCfs < 1000) {
+    return {
+      status: 'high',
+      label: 'High Flow',
+      description: 'Strong current. Experienced paddlers only. Bank fishing recommended.',
+      color: 'text-sky-700',
+      bgColor: 'bg-sky-50 border-sky-200',
+      icon: '💨'
+    }
+  } else {
+    return {
+      status: 'flood',
+      label: 'Flood Watch',
+      description: 'Dangerous conditions. Stay off the water. Flooding possible.',
+      color: 'text-rose-700',
+      bgColor: 'bg-rose-50 border-rose-200',
+      icon: '⚠️'
+    }
+  }
+}
+
+/**
+ * Sardis Release Status - "Is OKC Taking Our Water?"
+ */
+export interface SardisReleaseInfo {
+  isAllowed: boolean
+  currentFloor: number
+  floorLabel: string
+  reason: string
+  isDroughtOverride: boolean
+}
+
+export function getSardisReleaseStatus(
+  currentLevel: number,
+  droughtCondition: 'none' | 'moderate' | 'advanced' | 'extreme' = 'none',
+  date: Date = new Date()
+): SardisReleaseInfo {
+  const month = date.getMonth() + 1 // 1-12
+  const day = date.getDate()
+  
+  let floor: number
+  let floorLabel: string
+  let isDroughtOverride = false
+  
+  // Determine current floor based on drought and season
+  if (droughtCondition === 'extreme') {
+    floor = SARDIS_WITHDRAWAL_THRESHOLDS.extremeDroughtFloor
+    floorLabel = 'Extreme Drought Floor'
+    isDroughtOverride = true
+  } else if (droughtCondition === 'advanced') {
+    floor = SARDIS_WITHDRAWAL_THRESHOLDS.advancedDroughtFloor
+    floorLabel = 'Advanced Drought Floor'
+    isDroughtOverride = true
+  } else if (droughtCondition === 'moderate') {
+    const isSummerWindow = (month === 7 && day >= 5) || (month === 8)
+    if (isSummerWindow) {
+      floor = SARDIS_WITHDRAWAL_THRESHOLDS.moderateDroughtFloor
+      floorLabel = 'Moderate Drought Floor (Jul 5 - Aug 31)'
+      isDroughtOverride = true
+    } else {
+      // Outside summer window, use baseline
+      floor = month >= 4 && month <= 8 
+        ? SARDIS_WITHDRAWAL_THRESHOLDS.baselineSummer 
+        : SARDIS_WITHDRAWAL_THRESHOLDS.baselineWinter
+      floorLabel = month >= 4 && month <= 8 ? 'Summer Baseline' : 'Winter Baseline'
+    }
+  } else {
+    // No drought - use seasonal baseline
+    floor = month >= 4 && month <= 8 
+      ? SARDIS_WITHDRAWAL_THRESHOLDS.baselineSummer 
+      : SARDIS_WITHDRAWAL_THRESHOLDS.baselineWinter
+    floorLabel = month >= 4 && month <= 8 ? 'Summer Baseline (Apr-Aug)' : 'Winter Baseline (Sep-Mar)'
+  }
+  
+  const isAllowed = currentLevel >= floor
+  const reason = isAllowed
+    ? `Lake level (${currentLevel.toFixed(1)}') is above the ${floorLabel} (${floor}'). Releases permitted.`
+    : `Lake level (${currentLevel.toFixed(1)}') is below the ${floorLabel} (${floor}'). Releases BLOCKED.`
+  
+  return {
+    isAllowed,
+    currentFloor: floor,
+    floorLabel,
+    reason,
+    isDroughtOverride
+  }
 }
