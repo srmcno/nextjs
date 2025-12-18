@@ -94,7 +94,8 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
           const json = await res.json()
           const values = json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []
           interface USGSValue { dateTime: string; value: number }
-          const pts = values.map((v: USGSValue) => ({ t: v.dateTime, v: Number(v.value) })).filter((p: Point) => Number.isFinite(p.v))
+          const mapped = values.map((v: USGSValue) => ({ t: v.dateTime, v: Number(v.value) }))
+          const pts = mapped.filter((p: Point) => Number.isFinite(p.v))
 
           if (pts.length > 0) {
             if (!cancelled) {

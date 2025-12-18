@@ -329,6 +329,14 @@ export default function WaterManagerGame() {
   const weatherCurrent = weatherInfo[gameState.weatherEvent]
   const progressPercent = ((gameState.day - 1) / 7) * 100
 
+  // Helper function for slider gradient based on release amount
+  const getSliderGradient = (amount: number) => {
+    const pos = amount / 10
+    const mid1 = Math.min(pos + 30, 60)
+    const mid2 = Math.min(pos + 50, 80)
+    return `linear-gradient(to right, #10b981 0%, #10b981 ${pos}%, #3b82f6 ${pos}%, #3b82f6 ${mid1}%, #f59e0b ${mid1}%, #f59e0b ${mid2}%, #ef4444 ${mid2}%, #ef4444 100%)`
+  }
+
   return (
     <div className="rounded-2xl border-2 border-indigo-200 bg-white overflow-hidden shadow-xl">
       <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 px-5 py-4 text-white">
@@ -460,7 +468,7 @@ export default function WaterManagerGame() {
             onChange={(e) => setReleaseAmount(parseInt(e.target.value))}
             className="w-full h-4 rounded-full appearance-none cursor-pointer slider-gradient"
             style={{
-              background: `linear-gradient(to right, #10b981 0%, #10b981 ${releaseAmount/10}%, #3b82f6 ${releaseAmount/10}%, #3b82f6 ${Math.min(releaseAmount/10 + 30, 60)}%, #f59e0b ${Math.min(releaseAmount/10 + 30, 60)}%, #f59e0b ${Math.min(releaseAmount/10 + 50, 80)}%, #ef4444 ${Math.min(releaseAmount/10 + 50, 80)}%, #ef4444 100%)`
+              background: getSliderGradient(releaseAmount)
             }}
           />
           <div className="flex justify-between text-xs text-slate-600 mt-2 font-medium">
