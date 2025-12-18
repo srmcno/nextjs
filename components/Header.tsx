@@ -7,92 +7,92 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const navLinks = [
-    { label: 'Home', href: '/' },
-    { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Settlement Info', href: '/settlement' },
+    { href: '/', label: 'Home' },
+    { href: '/dashboard', label: 'Live Dashboard' },
+    { href: '/settlement', label: 'Settlement Info' },
   ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-slate-900/95 backdrop-blur-md supports-[backdrop-filter]:bg-slate-900/80">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        {/* Brand */}
-        <Link href="/" className="group flex items-center gap-3">
-          {/* Updated Logo Container */}
-          <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/20">
-            <img 
-              src="image_0.png" 
-              alt="Choctaw Nation Seal" 
-              className="h-8 w-8 object-contain" 
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold leading-none text-white tracking-wide">Water Portal</span>
-            <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-300">Choctaw & Chickasaw Nations</span>
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-3 group">
+          <img 
+            src="https://i.imgur.com/R7iU4ao.png" 
+            alt="Water Settlement Portal Logo" 
+            className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
+          />
+          <div className="hidden sm:block">
+            <div className="font-bold text-slate-900 leading-tight">Water Settlement Portal</div>
+            <div className="text-xs text-slate-500">Choctaw–Chickasaw Nations</div>
           </div>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex md:items-center md:gap-1">
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             >
               {link.label}
             </Link>
           ))}
+          
+          {/* Live Status Indicator */}
+          <div className="ml-4 flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+            </span>
+            Live Data
+          </div>
         </nav>
 
-        {/* Action Button */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="hidden rounded-lg bg-sky-600 px-4 py-2 text-sm font-bold text-white shadow-md transition-transform hover:bg-sky-500 hover:scale-105 active:scale-95 md:block"
-          >
-            Live Data
-          </Link>
-
-          {/* Mobile Toggle */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-lg p-2 text-slate-300 transition-colors hover:bg-white/10 hover:text-white md:hidden"
-            aria-label="Toggle menu"
-          >
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? (
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {mobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
-        </div>
+          ) : (
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="border-b border-white/10 bg-slate-900 px-4 py-4 md:hidden">
-          <nav className="flex flex-col gap-2">
+        <nav className="md:hidden border-t border-slate-100 bg-white px-4 py-3">
+          <div className="flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg px-4 py-3 text-base font-medium text-slate-300 hover:bg-white/5 hover:text-white"
+                className="rounded-lg px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
               >
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className="mt-2 flex items-center justify-center rounded-lg bg-sky-600 px-4 py-3 text-base font-bold text-white shadow-sm"
-            >
-              View Live Data
-            </Link>
-          </nav>
-        </div>
+          </div>
+          
+          {/* Mobile Live Status */}
+          <div className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-emerald-50 py-2 text-xs font-medium text-emerald-700">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+            </span>
+            Live Data Active
+          </div>
+        </nav>
       )}
     </header>
   )
