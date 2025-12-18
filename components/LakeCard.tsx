@@ -12,62 +12,32 @@ import {
   SARDIS_WITHDRAWAL_THRESHOLDS
 } from '../lib/waterBodies'
 
-interface UsgsValue {
-  dateTime: string
-  value: string
-}
-
-interface UsgsJson {
-  value?: {
-    timeSeries?: Array<{
-      values?: Array<{
-        value?: UsgsValue[]
-      }>
-    }>
-  }
-}
-
 type Point = { t: string; v: number }
-
-function fmtTime(iso: string) {
-  try {
-    const d = new Date(iso)
-    return d.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  } catch {
-    return iso
-  }
-}
 
 interface LakeCardProps {
   waterBody: WaterBody
 }
 
-const ALERT_STYLES: Record<AlertLevel, { badge: string; bg: string; border: string }> = {
+const ALERT_CONFIG: Record<AlertLevel, { badgeColor: string; borderColor: string; headerBg: string }> = {
   normal: {
-    badge: 'bg-emerald-100 text-emerald-900',
-    bg: 'bg-white',
-    border: 'border-slate-200'
+    badgeColor: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-600/20',
+    borderColor: 'border-slate-200 hover:border-emerald-300',
+    headerBg: 'bg-gradient-to-r from-slate-50 to-emerald-50/50'
   },
   watch: {
-    badge: 'bg-sky-100 text-sky-800',
-    bg: 'bg-sky-50/40',
-    border: 'border-sky-200'
+    badgeColor: 'bg-sky-100 text-sky-800 ring-1 ring-sky-600/20',
+    borderColor: 'border-sky-200 hover:border-sky-300',
+    headerBg: 'bg-gradient-to-r from-slate-50 to-sky-50/50'
   },
   warning: {
-    badge: 'bg-slate-200 text-slate-800',
-    bg: 'bg-slate-50/60',
-    border: 'border-slate-300'
+    badgeColor: 'bg-amber-100 text-amber-800 ring-1 ring-amber-600/20',
+    borderColor: 'border-amber-200 hover:border-amber-300',
+    headerBg: 'bg-gradient-to-r from-slate-50 to-amber-50/50'
   },
   critical: {
-    badge: 'bg-red-100 text-red-800',
-    bg: 'bg-red-50/60',
-    border: 'border-red-300'
+    badgeColor: 'bg-rose-100 text-rose-800 ring-1 ring-rose-600/20',
+    borderColor: 'border-rose-200 hover:border-rose-300',
+    headerBg: 'bg-gradient-to-r from-slate-50 to-rose-50/50'
   }
 }
 
@@ -76,9 +46,9 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
   const [err, setErr] = useState<string | null>(null)
   const [latest, setLatest] = useState<Point | null>(null)
   const [series, setSeries] = useState<Point[]>([])
-  const [dataSource, setDataSource] = useState<'usgs-live' | 'mock-demo' | null>(null)
+  const [sourceUsed, setSourceUsed] = useState<'usace' | 'usgs' | null>(null)
 
-  const { usgsId, parameterCode, conservationPool, streambed, name, type, description, county } = waterBody
+  const { usgsId, usaceId, parameterCode, usaceParam, conservationPool, streambed, name, type, county } = waterBody
   const isRiver = type === 'river'
 
   useEffect(() => {
@@ -86,62 +56,66 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
     setLoading(true)
     setErr(null)
 
-    const paramsToTry = waterBody.type === 'river'
-      ? [parameterCode, '00060']
-      : [parameterCode, '62614', '00065']
-
     const load = async () => {
-      let lastError: string | null = null
+      let dataFound = false
 
-      for (const param of paramsToTry) {
-        if (!param) continue
-
+      // 1. Try USACE API first for Reservoirs
+      if (usaceId && usaceParam && !cancelled) {
         try {
-          const res = await fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${param}`)
-          const dataSourceHeader = res.headers.get('X-Data-Source') as 'usgs-live' | 'mock-demo' | null
-          setDataSource(dataSourceHeader)
-          const json: UsgsJson = await res.json()
-
-          const values: UsgsValue[] =
-            json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []
-
-          const pts = values
-            .map(v => ({ t: v.dateTime, v: Number(v.value) }))
-            .filter(p => Number.isFinite(p.v))
-
-          if (pts.length === 0) {
-            lastError = `No recent observations for parameter ${param}`
-            continue
+          const res = await fetch(`/api/usace?site=${usaceId}&param=${usaceParam}`)
+          if (res.ok) {
+            const json = await res.json()
+            if (json.values && json.values.length > 0) {
+              const pts = json.values.map((v: any) => ({ t: v.dateTime, v: Number(v.value) }))
+              if (!cancelled) {
+                setSeries(pts)
+                setLatest(pts[pts.length - 1])
+                setSourceUsed('usace')
+                setLoading(false)
+                dataFound = true
+                return 
+              }
+            }
           }
-
-          if (cancelled) return
-
-          setSeries(pts)
-          const last = pts[pts.length - 1]
-          setLatest(last ? { v: last.v, t: last.t } : null)
-          setLoading(false)
-          return
-        } catch {
-          lastError = 'Failed to load USGS data'
+        } catch (e) {
+          console.warn(`USACE fetch failed for ${name}, falling back...`)
         }
       }
 
-      if (!cancelled) {
-        setErr(lastError || 'Unable to load data')
-        setSeries([])
-        setLatest(null)
+      // 2. Fallback to USGS API (or primary for Rivers)
+      if (!dataFound && !cancelled) {
+        try {
+          const res = await fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${parameterCode}`)
+          const json = await res.json()
+          const values = json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []
+          const pts = values.map((v: any) => ({ t: v.dateTime, v: Number(v.value) })).filter((p: any) => Number.isFinite(p.v))
+
+          if (pts.length > 0) {
+            if (!cancelled) {
+              setSeries(pts)
+              setLatest(pts[pts.length - 1])
+              setSourceUsed('usgs')
+              setLoading(false)
+              dataFound = true
+            }
+          }
+        } catch (e) {
+          console.error(`USGS fetch failed for ${name}`, e)
+        }
+      }
+
+      if (!dataFound && !cancelled) {
+        setErr('Data unavailable')
         setLoading(false)
       }
     }
 
     void load()
+    return () => { cancelled = true }
+  }, [usgsId, usaceId, usaceParam, parameterCode, name])
 
-    return () => {
-      cancelled = true
-    }
-  }, [usgsId, parameterCode, waterBody.type])
-
-  const alertLevel = useMemo((): AlertLevel => {
+  // ... (Calculations logic remains the same)
+  const alertLevel = useMemo(() => {
     if (!latest || !conservationPool) return 'normal'
     return getAlertLevel(latest.v, conservationPool)
   }, [latest, conservationPool])
@@ -151,242 +125,185 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
     return calculatePoolPercentage(latest.v, conservationPool, streambed)
   }, [latest, conservationPool, streambed])
 
-  const alertMessage = useMemo(() => {
-    if (!latest) return null
-    return getAlertMessage(waterBody, latest.v)
-  }, [latest, waterBody])
+  const stats = useMemo(() => {
+    if (!series.length) return null
+    const vals = series.map(p => p.v)
+    const change = series[series.length - 1].v - series[0].v
+    return { change }
+  }, [series])
 
-  const sardisRestricted = useMemo(() => {
-    if (waterBody.id !== 'sardis' || !latest) return false
-    return latest.v < SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal
-  }, [waterBody.id, latest])
+  const trend = useMemo(() => {
+    if (series.length < 10) return 'stable'
+    const recent = series.slice(-20)
+    const start = recent[0].v
+    const end = recent[recent.length-1].v
+    const diff = end - start
+    const threshold = isRiver ? start * 0.05 : 0.1
+    if (diff > threshold) return 'rising'
+    if (diff < -threshold) return 'falling'
+    return 'stable'
+  }, [series, isRiver])
 
-  const styles = ALERT_STYLES[alertLevel]
+  const alertMessage = useMemo(() => latest ? getAlertMessage(waterBody, latest.v) : null, [latest, waterBody])
+  const sardisRestricted = waterBody.id === 'sardis' && latest && latest.v < SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal
+  const styles = ALERT_CONFIG[alertLevel]
+  const statusLabel = { normal: 'Normal', watch: 'Watch', warning: 'Warning', critical: 'Critical' }[alertLevel]
 
-  const statusBadge = useMemo(() => {
-    if (!latest) return { label: 'No data', cls: 'bg-gray-100 text-gray-600' }
-    if (loading) return { label: 'Loading', cls: 'bg-gray-100 text-gray-600' }
-
-    const labels: Record<AlertLevel, string> = {
-      normal: 'Normal',
-      watch: 'Watch',
-      warning: 'Warning',
-      critical: 'Critical'
-    }
-
-    return { label: labels[alertLevel], cls: styles.badge }
-  }, [latest, loading, alertLevel, styles.badge])
-
-  const sardisLine =
-    waterBody.id === 'sardis'
-      ? [{
-          value: SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal,
-          label: 'OKC withdrawal floor',
-          color: '#0284c7'
-        }]
-      : undefined
+  const sardisLine = waterBody.id === 'sardis' ? [{
+    value: SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal,
+    label: 'OKC Withdrawal Floor',
+    color: '#ef4444'
+  }] : undefined
 
   return (
-    <div className={`rounded-2xl border-2 ${styles.border} ${styles.bg} shadow-sm transition-all hover:shadow-lg`}>
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 p-5 pb-2">
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">
-              {isRiver ? '🌊' : '💧'}
-            </span>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">{name}</h3>
-              <div className="flex flex-wrap gap-2 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                <span className="rounded-md bg-gray-100 px-2 py-0.5">USGS Station {usgsId}</span>
-                {waterBody.isSettlementCritical && (
-                  <span className="rounded-md bg-slate-900/10 px-2 py-0.5 text-slate-800">Settlement critical</span>
-                )}
-              </div>
+    <div className={`group relative overflow-hidden rounded-2xl border-2 bg-white shadow-sm transition-all duration-300 hover:shadow-xl ${styles.borderColor}`}>
+      
+      {/* HEADER */}
+      <div className={`px-5 py-4 ${styles.headerBg} border-b border-slate-100`}>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{isRiver ? '🌊' : '💧'}</span>
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-700">{name}</h3>
+            </div>
+            <div className="mt-1 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <span>{county} County</span>
+              <span className="text-slate-300">•</span>
+              <span>{sourceUsed === 'usace' ? `USACE ${usaceId}` : `USGS ${usgsId}`}</span>
             </div>
           </div>
-          <div className="mt-1 text-sm text-gray-500">
-            {county} County
+          <div className="flex flex-col items-end gap-1.5">
+            <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${styles.badgeColor}`}>
+              {loading ? 'Loading...' : statusLabel}
+            </span>
+            {waterBody.isSettlementCritical && (
+               <span className="text-[10px] font-bold text-slate-400">Settlement Critical</span>
+            )}
           </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadge.cls}`}>
-            {statusBadge.label}
-          </span>
-          {sardisRestricted && (
-            <span className="rounded-full bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-800">Withdrawal hold</span>
-          )}
         </div>
       </div>
 
-      {/* Alert Banner */}
-      {alertMessage && (
-        <div className={`mx-5 mb-3 rounded-lg px-3 py-2 text-sm font-medium ${
-          alertLevel === 'critical' ? 'bg-red-100 text-red-900' :
-          alertLevel === 'warning' ? 'bg-slate-200 text-slate-900' :
-          'bg-sky-100 text-sky-900'
-        }`}>
-          {alertMessage}
-        </div>
-      )}
-
-      {/* Sardis Special Banner */}
-      {sardisRestricted && (
-        <div className="mx-5 mb-3 rounded-lg bg-red-700 px-3 py-2 text-sm font-bold text-white">
-          ⚠️ OKC WITHDRAWAL RESTRICTED per Settlement Agreement
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="px-5 pb-4">
-        {loading ? (
-          <div className="flex h-52 items-center justify-center rounded-xl bg-gray-50">
-            <div className="flex items-center gap-2 text-gray-500">
-              <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Loading USGS data...
+      {/* ALERTS */}
+      {(alertMessage || sardisRestricted) && (
+        <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-3">
+           {sardisRestricted && (
+            <div className="mb-2 flex items-center gap-2 rounded-md bg-rose-100 px-3 py-2 text-xs font-bold text-rose-800">
+              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              WITHDRAWAL HOLD: Level below {SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal} ft
             </div>
+           )}
+           {alertMessage && (
+             <div className="text-xs font-medium text-slate-600">{alertMessage}</div>
+           )}
+        </div>
+      )}
+
+      {/* BODY */}
+      <div className="p-5">
+        {loading ? (
+          <div className="flex h-48 animate-pulse items-center justify-center rounded-xl bg-slate-100 text-xs font-medium text-slate-400">
+            Fetching live data...
           </div>
         ) : err ? (
-          <div className="rounded-xl bg-red-50 p-4 text-sm text-red-900">
-            <div className="font-semibold">Error loading data</div>
-            <div className="mt-1 text-red-700">{err}</div>
+          <div className="flex h-48 items-center justify-center rounded-xl bg-rose-50 text-xs font-medium text-rose-500">
+            {err}
           </div>
         ) : (
           <>
-            {/* Current Reading */}
-            <div className="mb-4 grid grid-cols-2 gap-4">
+            {/* PRIMARY METRIC */}
+            <div className="mb-6 flex items-end justify-between">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                  {isRiver ? 'Current Flow' : 'Current Level'}
-                </div>
-                <div className="mt-1 text-3xl font-extrabold text-gray-900">
-                  {latest ? latest.v.toFixed(2) : '—'}
-                  <span className="ml-1 text-base font-semibold text-gray-500">
-                    {isRiver ? 'cfs' : 'ft'}
+                <div className="text-xs font-semibold uppercase text-slate-400">{isRiver ? 'Discharge' : 'Elevation'}</div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold text-slate-900 tracking-tight">
+                    {latest?.v.toFixed(2)}
                   </span>
+                  <span className="text-sm font-medium text-slate-500">{isRiver ? 'cfs' : 'ft'}</span>
                 </div>
-                <div className="mt-1 text-xs text-gray-500">Updated {latest ? fmtTime(latest.t) : '—'}</div>
               </div>
-
-              <div className="flex flex-col gap-2 text-xs text-gray-600">
-                {conservationPool && !isRiver && (
-                  <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Conservation pool</div>
-                    <div className="text-lg font-bold text-emerald-900">{conservationPool.toFixed(1)} ft</div>
-                  </div>
-                )}
-                {streambed !== undefined && !isRiver && (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Streambed datum</div>
-                    <div className="text-base font-semibold text-slate-800">{streambed.toFixed(1)} ft</div>
-                  </div>
-                )}
+              
+              <div className="text-right">
+                 {/* Trend Badge */}
+                 <div className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold ${
+                   trend === 'rising' ? 'bg-blue-50 text-blue-700' : 
+                   trend === 'falling' ? 'bg-amber-50 text-amber-700' : 
+                   'bg-slate-50 text-slate-600'
+                 }`}>
+                   {trend === 'rising' ? '↗ Rising' : trend === 'falling' ? '↘ Falling' : '→ Stable'}
+                 </div>
+                 {stats && (
+                   <div className={`mt-1 text-[11px] font-medium ${stats.change >= 0 ? 'text-blue-600' : 'text-amber-600'}`}>
+                     {stats.change > 0 ? '+' : ''}{stats.change.toFixed(2)} {isRiver ? 'cfs' : 'ft'} (24h)
+                   </div>
+                 )}
               </div>
             </div>
 
-            {/* Pool Level Progress Bar */}
-            {poolPercentage !== null && !isRiver && (
-              <div className="mb-4">
-                <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="font-medium text-gray-600">Pool Level</span>
-                  <span className={`font-bold ${
-                    poolPercentage >= 95 ? 'text-emerald-700' :
-                    poolPercentage >= 85 ? 'text-sky-700' :
-                    poolPercentage >= 75 ? 'text-slate-700' :
-                    'text-red-700'
-                  }`}>
-                    {poolPercentage.toFixed(1)}%
-                  </span>
+            {/* POOL BAR */}
+            {!isRiver && poolPercentage !== null && (
+              <div className="mb-6">
+                <div className="mb-1.5 flex justify-between text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                   <span>Pool Capacity</span>
+                   <span>{poolPercentage.toFixed(1)}%</span>
                 </div>
-                <div className="h-3 overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      poolPercentage >= 95 ? 'bg-emerald-500' :
-                      poolPercentage >= 85 ? 'bg-sky-500' :
-                      poolPercentage >= 75 ? 'bg-slate-500' :
-                      'bg-red-500'
+                <div className="relative h-2.5 overflow-hidden rounded-full bg-slate-100">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-1000 ${
+                      poolPercentage < 75 ? 'bg-rose-500' : 
+                      poolPercentage < 85 ? 'bg-amber-400' : 
+                      poolPercentage < 95 ? 'bg-sky-500' : 
+                      'bg-emerald-500'
                     }`}
-                    style={{ width: `${Math.min(100, poolPercentage)}%` }}
-                  />
+                    style={{ width: `${Math.min(poolPercentage, 100)}%` }}
+                  ></div>
                 </div>
-                <div className="mt-1 flex justify-between text-xs text-gray-500">
-                  <span>Streambed: {streambed?.toFixed(0)} ft</span>
-                  <span>Full: {conservationPool?.toFixed(0)} ft</span>
+                <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+                   <span>Bed: {streambed?.toFixed(0)} ft</span>
+                   <span>Cons: {conservationPool?.toFixed(0)} ft</span>
                 </div>
               </div>
             )}
 
-            {/* Settlement guardrail */}
-            {!isRiver && (
-              <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-relaxed text-slate-700">
-                <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-sky-800">
-                  <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-sky-600 text-[10px] text-white">!</span>
-                  Settlement guardrails
-                </div>
-                {waterBody.id === 'sardis' ? (
-                  <p>
-                    Oklahoma City withdrawals pause when Sardis falls below {SARDIS_WITHDRAWAL_THRESHOLDS.minimumForWithdrawal} ft,
-                    and recreation/wildlife protections trigger heightened alerts below {SARDIS_WITHDRAWAL_THRESHOLDS.criticalLevel} ft.
-                  </p>
-                ) : (
-                  <p>
-                    Pools are compared to conservation storage; alerts follow the settlement tiers (watch, warning, critical) set off of the pool percentage bands.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Chart */}
-            <div className="rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 shadow-inner">
-              <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                <span>{isRiver ? 'Realtime discharge trace' : 'Pool elevation trace'}</span>
-                <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                  <span className="flex items-center gap-1"><span className="h-1.5 w-4 rounded-full bg-slate-900"></span> USGS</span>
-                  {!isRiver && <span className="flex items-center gap-1"><span className="h-1.5 w-4 rounded-full bg-emerald-500"></span> Settlement Pool</span>}
-                </div>
-              </div>
-              <WaterChart
-                data={series.slice(-96)}
-                threshold={!isRiver ? conservationPool : undefined}
-                isFlow={isRiver}
-                streambed={!isRiver ? streambed : undefined}
-                floodPoolTop={!isRiver ? waterBody.floodPoolTop : undefined}
-                alertLines={sardisLine}
-              />
+            {/* CHART */}
+            <div className="relative h-32 w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-50/50">
+               <WaterChart
+                 data={series}
+                 threshold={!isRiver ? conservationPool : undefined}
+                 isFlow={isRiver}
+                 streambed={!isRiver ? streambed : undefined}
+                 alertLines={sardisLine}
+               />
             </div>
 
-            {/* Footer Info */}
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500">
-              <div className="flex items-center gap-2">
-                {dataSource === 'mock-demo' ? (
-                  <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-800">Demo Data</span>
-                ) : (
-                  <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600">USGS real-time</span>
-                )}
-                <span className="hidden rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600 sm:inline">Agreement guardrails</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <DataExport waterBodyName={name} data={series} usgsId={usgsId} />
-                <a
-                  className="font-semibold text-blue-600 hover:underline"
-                  href={`https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View on USGS →
-                </a>
-              </div>
+            {/* FOOTER ACTIONS */}
+            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+               <span className="text-[10px] font-medium text-slate-400">
+                 {sourceUsed === 'usace' ? '✓ USACE Official' : '✓ USGS Proxy'}
+               </span>
+               <div className="flex gap-3">
+                 <DataExport 
+                    waterBodyName={name} 
+                    data={series}
+                    usgsId={usgsId} 
+                    conservationPool={conservationPool} 
+                    currentLevel={latest?.v} 
+                    poolPercentage={poolPercentage} 
+                    alertLevel={alertLevel}
+                 />
+                 <a 
+                   href={sourceUsed === 'usace' 
+                     ? `https://water.usace.army.mil/overview/swt/locations/${usaceId?.toLowerCase()}` 
+                     : `https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
+                   target="_blank"
+                   rel="noreferrer"
+                   className="text-[11px] font-bold text-sky-600 hover:text-sky-800"
+                 >
+                   {sourceUsed === 'usace' ? 'USACE Page ↗' : 'USGS Page ↗'}
+                 </a>
+               </div>
             </div>
           </>
         )}
-      </div>
-
-      {/* Description Footer */}
-      <div className="border-t border-gray-200 bg-gray-50/50 px-5 py-3">
-        <p className="text-xs text-gray-600 line-clamp-2">{description}</p>
       </div>
     </div>
   )
