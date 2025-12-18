@@ -322,4 +322,3 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
     </div>
   )
 }
-}
