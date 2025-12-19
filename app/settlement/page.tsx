@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
+import BackToTop from '../../components/BackToTop'
 import { SARDIS_WITHDRAWAL_THRESHOLDS, ALERT_THRESHOLDS } from '../../lib/waterBodies'
 
 export const metadata = {
@@ -289,6 +290,7 @@ export default function SettlementPage() {
         </section>
       </main>
 
+      <BackToTop />
       <Footer />
     </div>
   )

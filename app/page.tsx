@@ -65,6 +65,12 @@ export default function Home() {
                 </svg>
               </a>
               <a
+                href="/game"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-900/20 transition-all hover:from-purple-400 hover:to-indigo-500 hover:shadow-purple-500/30 active:scale-95"
+              >
+                🎮 Play Water Game
+              </a>
+              <a
                 href="/settlement"
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-base font-semibold text-white transition-all hover:bg-white/10 active:scale-95"
               >

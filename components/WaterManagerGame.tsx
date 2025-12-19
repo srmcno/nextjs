@@ -1,7 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SARDIS_WITHDRAWAL_THRESHOLDS } from '../lib/waterBodies'
+
+interface Achievement {
+  id: string
+  name: string
+  description: string
+  icon: string
+  unlocked: boolean
+}
 
 interface GameState {
   day: number
@@ -16,10 +24,49 @@ interface GameState {
   score: number
   streak: number
   weatherEvent: 'sunny' | 'rainy' | 'drought' | 'storm'
+  achievements: Achievement[]
+  gamesPlayed: number
+}
+
+const ACHIEVEMENTS_LIST: Achievement[] = [
+  { id: 'first_win', name: 'First Victory', description: 'Win your first game', icon: '🏆', unlocked: false },
+  { id: 'perfect_balance', name: 'Perfect Balance', description: 'Keep both satisfaction scores above 80%', icon: '⚖️', unlocked: false },
+  { id: 'streak_master', name: 'Streak Master', description: 'Achieve a 5-day streak', icon: '🔥', unlocked: false },
+  { id: 'high_scorer', name: 'High Scorer', description: 'Score over 1000 points', icon: '🎯', unlocked: false },
+  { id: 'hard_mode_win', name: 'Expert Manager', description: 'Win on hard difficulty', icon: '💎', unlocked: false },
+  { id: 'eco_warrior', name: 'Eco Warrior', description: 'Keep lake above 598 ft for entire game', icon: '🌿', unlocked: false },
+  { id: 'veteran', name: 'Veteran', description: 'Play 10 games', icon: '⭐', unlocked: false },
+]
+
+// Helper to load initial high score
+const loadHighScore = (): number => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('waterGameHighScore')
+    return saved ? parseInt(saved) : 0
+  }
+  return 0
+}
+
+// Helper to load achievements
+const loadAchievements = (): Achievement[] => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('waterGameAchievements')
+    return saved ? JSON.parse(saved) : ACHIEVEMENTS_LIST
+  }
+  return ACHIEVEMENTS_LIST
+}
+
+// Helper to load games played
+const loadGamesPlayed = (): number => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('waterGameGamesPlayed')
+    return saved ? parseInt(saved) : 0
+  }
+  return 0
 }
 
 export default function WaterManagerGame() {
-  const [gameState, setGameState] = useState<GameState>({
+  const [gameState, setGameState] = useState<GameState>(() => ({
     day: 1,
     lakeLevel: 598.5,
     okcSatisfaction: 50,
@@ -31,12 +78,107 @@ export default function WaterManagerGame() {
     difficulty: 'normal',
     score: 0,
     streak: 0,
-    weatherEvent: 'sunny'
-  })
+    weatherEvent: 'sunny',
+    achievements: loadAchievements(),
+    gamesPlayed: loadGamesPlayed()
+  }))
   
   const [releaseAmount, setReleaseAmount] = useState(0)
   const [showInstructions, setShowInstructions] = useState(true)
   const [animateScore, setAnimateScore] = useState(false)
+  const [highScore, setHighScore] = useState(loadHighScore)
+  const [showAchievements, setShowAchievements] = useState(false)
+  const [newAchievement, setNewAchievement] = useState<Achievement | null>(null)
+
+  // Save high score and achievements
+  const saveProgress = (score: number, achievements: Achievement[], gamesPlayed: number) => {
+    if (typeof window !== 'undefined') {
+      if (score > highScore) {
+        localStorage.setItem('waterGameHighScore', score.toString())
+        setHighScore(score)
+      }
+      localStorage.setItem('waterGameAchievements', JSON.stringify(achievements))
+      localStorage.setItem('waterGameGamesPlayed', gamesPlayed.toString())
+    }
+  }
+
+  // Check and unlock achievements
+  const checkAchievements = (state: GameState) => {
+    const newAchievements = [...state.achievements]
+    let unlocked = false
+
+    // First win
+    if (state.outcome === 'win' && !newAchievements.find(a => a.id === 'first_win')?.unlocked) {
+      const idx = newAchievements.findIndex(a => a.id === 'first_win')
+      if (idx >= 0) {
+        newAchievements[idx].unlocked = true
+        setNewAchievement(newAchievements[idx])
+        unlocked = true
+      }
+    }
+
+    // Perfect balance
+    if (state.okcSatisfaction >= 80 && state.localSatisfaction >= 80 && 
+        !newAchievements.find(a => a.id === 'perfect_balance')?.unlocked) {
+      const idx = newAchievements.findIndex(a => a.id === 'perfect_balance')
+      if (idx >= 0) {
+        newAchievements[idx].unlocked = true
+        if (!unlocked) setNewAchievement(newAchievements[idx])
+        unlocked = true
+      }
+    }
+
+    // Streak master
+    if (state.streak >= 5 && !newAchievements.find(a => a.id === 'streak_master')?.unlocked) {
+      const idx = newAchievements.findIndex(a => a.id === 'streak_master')
+      if (idx >= 0) {
+        newAchievements[idx].unlocked = true
+        if (!unlocked) setNewAchievement(newAchievements[idx])
+        unlocked = true
+      }
+    }
+
+    // High scorer
+    if (state.score > 1000 && !newAchievements.find(a => a.id === 'high_scorer')?.unlocked) {
+      const idx = newAchievements.findIndex(a => a.id === 'high_scorer')
+      if (idx >= 0) {
+        newAchievements[idx].unlocked = true
+        if (!unlocked) setNewAchievement(newAchievements[idx])
+        unlocked = true
+      }
+    }
+
+    // Hard mode win
+    if (state.outcome === 'win' && state.difficulty === 'hard' && 
+        !newAchievements.find(a => a.id === 'hard_mode_win')?.unlocked) {
+      const idx = newAchievements.findIndex(a => a.id === 'hard_mode_win')
+      if (idx >= 0) {
+        newAchievements[idx].unlocked = true
+        if (!unlocked) setNewAchievement(newAchievements[idx])
+        unlocked = true
+      }
+    }
+
+    // Veteran
+    if (state.gamesPlayed >= 10 && !newAchievements.find(a => a.id === 'veteran')?.unlocked) {
+      const idx = newAchievements.findIndex(a => a.id === 'veteran')
+      if (idx >= 0) {
+        newAchievements[idx].unlocked = true
+        if (!unlocked) setNewAchievement(newAchievements[idx])
+        unlocked = true
+      }
+    }
+
+    return newAchievements
+  }
+
+  // Hide achievement notification after 3 seconds
+  useEffect(() => {
+    if (newAchievement) {
+      const timer = setTimeout(() => setNewAchievement(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [newAchievement])
 
   const { baselineSummer } = SARDIS_WITHDRAWAL_THRESHOLDS
   
@@ -214,6 +356,16 @@ export default function WaterManagerGame() {
     // Calculate final score with difficulty multiplier
     newState.score += Math.floor(dayScore * settings.scoreMultiplier)
     
+    // Check achievements
+    const updatedAchievements = checkAchievements(newState)
+    newState.achievements = updatedAchievements
+    
+    // Increment games played if game over
+    if (newState.gameOver) {
+      newState.gamesPlayed += 1
+      saveProgress(newState.score, updatedAchievements, newState.gamesPlayed)
+    }
+    
     newState.events = [...newEvents, ...newState.events].slice(0, 10)
     setGameState(newState)
     setReleaseAmount(0)
@@ -224,7 +376,7 @@ export default function WaterManagerGame() {
   }
 
   const resetGame = () => {
-    setGameState({
+    setGameState(prev => ({
       day: 1,
       lakeLevel: 598.5,
       okcSatisfaction: 50,
@@ -233,11 +385,13 @@ export default function WaterManagerGame() {
       events: ['☀️ August 1st. Hot summer day. You are now the Sardis Lake Water Manager.'],
       gameOver: false,
       outcome: null,
-      difficulty: gameState.difficulty, // Keep selected difficulty
+      difficulty: prev.difficulty, // Keep selected difficulty
       score: 0,
       streak: 0,
-      weatherEvent: 'sunny'
-    })
+      weatherEvent: 'sunny',
+      achievements: prev.achievements, // Keep achievements
+      gamesPlayed: prev.gamesPlayed // Keep games played count
+    }))
     setReleaseAmount(0)
   }
 
@@ -289,6 +443,59 @@ export default function WaterManagerGame() {
                 <strong>NO RELEASES</strong> if lake drops below {baselineSummer} ft. Violation = GAME OVER!
               </p>
             </div>
+          </div>
+
+          {/* High Score Display */}
+          {highScore > 0 && (
+            <div className="mt-6 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-100 p-4 border-2 border-amber-300">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-amber-800">🏆 Your High Score</div>
+                  <div className="text-3xl font-black text-amber-600">{highScore}</div>
+                </div>
+                <div className="text-sm text-amber-700">
+                  Games Played: {gameState.gamesPlayed}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Achievements Preview */}
+          <div className="mt-6 border-t-2 border-dashed border-slate-200 pt-5">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                <span>🏅</span> Achievements
+              </h4>
+              <button
+                onClick={() => setShowAchievements(!showAchievements)}
+                className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold"
+              >
+                {showAchievements ? 'Hide' : 'View All'}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {gameState.achievements.slice(0, showAchievements ? undefined : 4).map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                    achievement.unlocked
+                      ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300'
+                      : 'bg-slate-100 border-2 border-slate-200 opacity-50'
+                  }`}
+                  title={achievement.description}
+                >
+                  <span className="text-xl">{achievement.icon}</span>
+                  <span className={achievement.unlocked ? 'text-amber-800 font-semibold' : 'text-slate-600'}>
+                    {achievement.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {showAchievements && (
+              <div className="mt-3 text-xs text-slate-600">
+                Unlocked: {gameState.achievements.filter(a => a.unlocked).length} / {gameState.achievements.length}
+              </div>
+            )}
           </div>
 
           <div className="mt-6 border-t-2 border-dashed border-slate-200 pt-5">
@@ -350,12 +557,17 @@ export default function WaterManagerGame() {
             </h3>
             <p className="text-sm text-indigo-200">Day {gameState.day} of 7 • {weatherCurrent.emoji} {weatherCurrent.label}</p>
           </div>
-          <button 
-            onClick={resetGame} 
-            className="rounded-lg bg-white/20 px-3 py-1.5 text-sm font-semibold hover:bg-white/30 transition-colors"
-          >
-            🔄 Restart
-          </button>
+          <div className="flex flex-col items-end">
+            <button 
+              onClick={resetGame} 
+              className="rounded-lg bg-white/20 px-3 py-1.5 text-sm font-semibold hover:bg-white/30 transition-colors"
+            >
+              🔄 Restart
+            </button>
+            {highScore > 0 && (
+              <div className="text-xs text-indigo-200 mt-1">High: {highScore}</div>
+            )}
+          </div>
         </div>
 
         {/* Progress bar */}
@@ -546,6 +758,22 @@ export default function WaterManagerGame() {
           ))}
         </div>
       </div>
+
+      {/* Achievement Notification */}
+      {newAchievement && (
+        <div className="fixed top-20 right-4 z-50 animate-bounce">
+          <div className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 p-4 shadow-2xl border-2 border-amber-300">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">{newAchievement.icon}</span>
+              <div className="text-white">
+                <div className="font-bold text-sm">Achievement Unlocked!</div>
+                <div className="text-lg font-black">{newAchievement.name}</div>
+                <div className="text-xs text-amber-100">{newAchievement.description}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

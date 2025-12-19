@@ -11,6 +11,7 @@ import DroughtMeter from '../../components/DroughtMeter'
 import SettlementMap from '../../components/SettlementMap'
 import WaterManagerGame from '../../components/WaterManagerGame'
 import LawnWateringWidget from '../../components/LawnWateringWidget'
+import BackToTop from '../../components/BackToTop'
 import { SETTLEMENT_WATER_BODIES, WaterBody } from '../../lib/waterBodies'
 
 export default function DashboardPage() {
@@ -290,6 +291,7 @@ export default function DashboardPage() {
         )}
       </main>
 
+      <BackToTop />
       <Footer />
     </div>
   )
