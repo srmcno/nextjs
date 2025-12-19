@@ -26,7 +26,7 @@ export default function Header() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header className="sticky top-0 z-50 border-b border-slate-700 bg-[#0b1b3b]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0b1b3b]/80">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
@@ -36,8 +36,8 @@ export default function Header() {
             className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
           />
           <div className="hidden sm:block">
-            <div className="font-bold text-slate-900 leading-tight">Water Settlement Portal</div>
-            <div className="text-xs text-slate-500">Choctaw–Chickasaw Nations</div>
+            <div className="font-bold text-white leading-tight">Water Settlement Portal</div>
+            <div className="text-xs text-slate-300">Choctaw–Chickasaw Nations</div>
           </div>
         </Link>
 
@@ -47,17 +47,17 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
             >
               {link.label}
             </Link>
           ))}
           
           {/* Live Status Indicator */}
-          <div className="ml-4 flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
+          <div className="ml-4 flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1.5 text-xs font-medium text-emerald-300 border border-emerald-500/30">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
             </span>
             Live Data
           </div>
@@ -66,7 +66,7 @@ export default function Header() {
         {/* Mobile Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+          className="md:hidden rounded-lg p-2 text-slate-300 hover:bg-white/10 hover:text-white"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
@@ -83,14 +83,14 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <nav className="md:hidden border-t border-slate-100 bg-white px-4 py-3">
+        <nav className="md:hidden border-t border-slate-700 bg-[#0b1b3b] px-4 py-3">
           <div className="flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                className="rounded-lg px-4 py-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
               >
                 {link.label}
               </Link>
@@ -98,10 +98,10 @@ export default function Header() {
           </div>
           
           {/* Mobile Live Status */}
-          <div className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-emerald-50 py-2 text-xs font-medium text-emerald-700">
+          <div className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-emerald-500/20 py-2 text-xs font-medium text-emerald-300 border border-emerald-500/30">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
             </span>
             Live Data Active
           </div>

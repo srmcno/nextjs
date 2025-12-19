@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { SARDIS_WITHDRAWAL_THRESHOLDS } from '../lib/waterBodies'
+import PixelLakeScene from './PixelLakeScene'
 
 interface Achievement {
   id: string
@@ -26,6 +27,8 @@ interface GameState {
   weatherEvent: 'sunny' | 'rainy' | 'drought' | 'storm'
   achievements: Achievement[]
   gamesPlayed: number
+  fishCaught: number
+  boatsSailed: number
 }
 
 const ACHIEVEMENTS_LIST: Achievement[] = [
@@ -36,6 +39,9 @@ const ACHIEVEMENTS_LIST: Achievement[] = [
   { id: 'hard_mode_win', name: 'Expert Manager', description: 'Win on hard difficulty', icon: '💎', unlocked: false },
   { id: 'eco_warrior', name: 'Eco Warrior', description: 'Keep lake above 598 ft for entire game', icon: '🌿', unlocked: false },
   { id: 'veteran', name: 'Veteran', description: 'Play 10 games', icon: '⭐', unlocked: false },
+  { id: 'fisher_king', name: 'Fisher King', description: 'Achieve 100% local satisfaction', icon: '🎣', unlocked: false },
+  { id: 'city_hero', name: 'City Hero', description: 'Achieve 100% OKC satisfaction', icon: '🏙️', unlocked: false },
+  { id: 'weather_master', name: 'Weather Master', description: 'Win during a drought', icon: '☀️', unlocked: false },
 ]
 
 // Helper to load initial high score
@@ -65,6 +71,64 @@ const loadGamesPlayed = (): number => {
   return 0
 }
 
+// Sound effect generator using Web Audio API
+const playSound = (audioContext: AudioContext | null, type: 'splash' | 'success' | 'fail' | 'cast' | 'catch') => {
+  if (!audioContext) return
+
+  const oscillator = audioContext.createOscillator()
+  const gainNode = audioContext.createGain()
+
+  oscillator.connect(gainNode)
+  gainNode.connect(audioContext.destination)
+
+  const now = audioContext.currentTime
+
+  switch (type) {
+    case 'splash':
+      oscillator.frequency.setValueAtTime(400, now)
+      oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.2)
+      gainNode.gain.setValueAtTime(0.3, now)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2)
+      oscillator.start(now)
+      oscillator.stop(now + 0.2)
+      break
+    case 'success':
+      oscillator.frequency.setValueAtTime(523, now) // C5
+      oscillator.frequency.setValueAtTime(659, now + 0.1) // E5
+      oscillator.frequency.setValueAtTime(784, now + 0.2) // G5
+      gainNode.gain.setValueAtTime(0.2, now)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3)
+      oscillator.start(now)
+      oscillator.stop(now + 0.3)
+      break
+    case 'fail':
+      oscillator.frequency.setValueAtTime(400, now)
+      oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.3)
+      gainNode.gain.setValueAtTime(0.2, now)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3)
+      oscillator.start(now)
+      oscillator.stop(now + 0.3)
+      break
+    case 'cast':
+      oscillator.frequency.setValueAtTime(800, now)
+      oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.15)
+      gainNode.gain.setValueAtTime(0.15, now)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15)
+      oscillator.start(now)
+      oscillator.stop(now + 0.15)
+      break
+    case 'catch':
+      oscillator.frequency.setValueAtTime(600, now)
+      oscillator.frequency.setValueAtTime(700, now + 0.05)
+      oscillator.frequency.setValueAtTime(800, now + 0.1)
+      gainNode.gain.setValueAtTime(0.2, now)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15)
+      oscillator.start(now)
+      oscillator.stop(now + 0.15)
+      break
+  }
+}
+
 export default function WaterManagerGame() {
   const [gameState, setGameState] = useState<GameState>(() => ({
     day: 1,
@@ -80,7 +144,9 @@ export default function WaterManagerGame() {
     streak: 0,
     weatherEvent: 'sunny',
     achievements: loadAchievements(),
-    gamesPlayed: loadGamesPlayed()
+    gamesPlayed: loadGamesPlayed(),
+    fishCaught: 0,
+    boatsSailed: 0,
   }))
   
   const [releaseAmount, setReleaseAmount] = useState(0)
@@ -89,6 +155,8 @@ export default function WaterManagerGame() {
   const [highScore, setHighScore] = useState(loadHighScore)
   const [showAchievements, setShowAchievements] = useState(false)
   const [newAchievement, setNewAchievement] = useState<Achievement | null>(null)
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const audioContextRef = useRef<AudioContext | null>(null)
 
   // Save high score and achievements
   const saveProgress = (score: number, achievements: Achievement[], gamesPlayed: number) => {
@@ -162,6 +230,37 @@ export default function WaterManagerGame() {
     // Veteran
     if (state.gamesPlayed >= 10 && !newAchievements.find(a => a.id === 'veteran')?.unlocked) {
       const idx = newAchievements.findIndex(a => a.id === 'veteran')
+      if (idx >= 0) {
+        newAchievements[idx].unlocked = true
+        if (!unlocked) setNewAchievement(newAchievements[idx])
+        unlocked = true
+      }
+    }
+
+    // Fisher King - 100% local satisfaction
+    if (state.localSatisfaction === 100 && !newAchievements.find(a => a.id === 'fisher_king')?.unlocked) {
+      const idx = newAchievements.findIndex(a => a.id === 'fisher_king')
+      if (idx >= 0) {
+        newAchievements[idx].unlocked = true
+        if (!unlocked) setNewAchievement(newAchievements[idx])
+        unlocked = true
+      }
+    }
+
+    // City Hero - 100% OKC satisfaction
+    if (state.okcSatisfaction === 100 && !newAchievements.find(a => a.id === 'city_hero')?.unlocked) {
+      const idx = newAchievements.findIndex(a => a.id === 'city_hero')
+      if (idx >= 0) {
+        newAchievements[idx].unlocked = true
+        if (!unlocked) setNewAchievement(newAchievements[idx])
+        unlocked = true
+      }
+    }
+
+    // Weather Master - Win during drought
+    if (state.outcome === 'win' && state.weatherEvent === 'drought' && 
+        !newAchievements.find(a => a.id === 'weather_master')?.unlocked) {
+      const idx = newAchievements.findIndex(a => a.id === 'weather_master')
       if (idx >= 0) {
         newAchievements[idx].unlocked = true
         if (!unlocked) setNewAchievement(newAchievements[idx])
@@ -356,6 +455,25 @@ export default function WaterManagerGame() {
     // Calculate final score with difficulty multiplier
     newState.score += Math.floor(dayScore * settings.scoreMultiplier)
     
+    // Track stats
+    if (newState.localSatisfaction >= 70) {
+      newState.fishCaught += Math.floor(Math.random() * 3) + 1
+    }
+    newState.boatsSailed += Math.floor(Math.random() * 2)
+    
+    // Play sound effects
+    if (soundEnabled && audioContextRef.current) {
+      if (dayScore > 100) {
+        playSound(audioContextRef.current, 'success')
+      } else if (dayScore < 0) {
+        playSound(audioContextRef.current, 'fail')
+      } else if (newState.day === 5 && newState.lakeLevel >= baselineSummer) {
+        playSound(audioContextRef.current, 'catch')
+      } else if (releaseAmount > 0) {
+        playSound(audioContextRef.current, 'splash')
+      }
+    }
+    
     // Check achievements
     const updatedAchievements = checkAchievements(newState)
     newState.achievements = updatedAchievements
@@ -364,6 +482,15 @@ export default function WaterManagerGame() {
     if (newState.gameOver) {
       newState.gamesPlayed += 1
       saveProgress(newState.score, updatedAchievements, newState.gamesPlayed)
+      
+      // Play end game sound
+      if (soundEnabled && audioContextRef.current) {
+        if (newState.outcome === 'win') {
+          playSound(audioContextRef.current, 'success')
+        } else {
+          playSound(audioContextRef.current, 'fail')
+        }
+      }
     }
     
     newState.events = [...newEvents, ...newState.events].slice(0, 10)
@@ -390,7 +517,9 @@ export default function WaterManagerGame() {
       streak: 0,
       weatherEvent: 'sunny',
       achievements: prev.achievements, // Keep achievements
-      gamesPlayed: prev.gamesPlayed // Keep games played count
+      gamesPlayed: prev.gamesPlayed, // Keep games played count
+      fishCaught: 0,
+      boatsSailed: 0,
     }))
     setReleaseAmount(0)
   }
@@ -557,15 +686,32 @@ export default function WaterManagerGame() {
             </h3>
             <p className="text-sm text-indigo-200">Day {gameState.day} of 7 • {weatherCurrent.emoji} {weatherCurrent.label}</p>
           </div>
-          <div className="flex flex-col items-end">
-            <button 
-              onClick={resetGame} 
-              className="rounded-lg bg-white/20 px-3 py-1.5 text-sm font-semibold hover:bg-white/30 transition-colors"
-            >
-              🔄 Restart
-            </button>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex gap-2">
+              <button 
+                onClick={() => {
+                  if (!audioContextRef.current) {
+                    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+                  }
+                  setSoundEnabled(!soundEnabled)
+                  if (!soundEnabled && audioContextRef.current) {
+                    playSound(audioContextRef.current, 'splash')
+                  }
+                }}
+                className="rounded-lg bg-white/20 px-3 py-1.5 text-sm font-semibold hover:bg-white/30 transition-colors"
+                title={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
+              >
+                {soundEnabled ? '🔊' : '🔇'}
+              </button>
+              <button 
+                onClick={resetGame} 
+                className="rounded-lg bg-white/20 px-3 py-1.5 text-sm font-semibold hover:bg-white/30 transition-colors"
+              >
+                🔄 Restart
+              </button>
+            </div>
             {highScore > 0 && (
-              <div className="text-xs text-indigo-200 mt-1">High: {highScore}</div>
+              <div className="text-xs text-indigo-200">High: {highScore}</div>
             )}
           </div>
         </div>
@@ -577,6 +723,18 @@ export default function WaterManagerGame() {
             style={{ width: `${progressPercent}%` }}
           />
         </div>
+      </div>
+
+      {/* Pixel Lake Scene */}
+      <div className="p-4 bg-gradient-to-b from-slate-50 to-white border-b-2 border-indigo-100">
+        <PixelLakeScene
+          lakeLevel={gameState.lakeLevel}
+          weather={gameState.weatherEvent}
+          releaseAmount={releaseAmount}
+          day={gameState.day}
+          isGameOver={gameState.gameOver}
+          outcome={gameState.outcome}
+        />
       </div>
 
       {/* Score and metrics */}
