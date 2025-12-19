@@ -35,6 +35,9 @@ export default function Footer() {
                 <Link href="/dashboard" className="text-gray-400 hover:text-white">Live Dashboard</Link>
               </li>
               <li>
+                <Link href="/game" className="text-gray-400 hover:text-white">Water Game</Link>
+              </li>
+              <li>
                 <Link href="/settlement" className="text-gray-400 hover:text-white">Settlement Info</Link>
               </li>
             </ul>
