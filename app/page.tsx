@@ -25,12 +25,14 @@ export default function Home() {
       {/* HERO SECTION - Updated with Choctaw Nation Brand Colors */}
       <section className="relative overflow-hidden bg-gradient-to-br from-choctaw-brown via-choctaw-brownLight to-choctaw-green/20 text-white">
         {/* Feathers Graphic - bleeding off edge per brand standards */}
+        {/* Decorative background element with empty alt per WCAG guidelines for decorative images */}
         <div className="absolute -right-40 top-0 h-full w-auto opacity-10 pointer-events-none">
           <img 
             src="/choctaw-feathers-graphic.svg" 
             alt="" 
             className="h-full w-auto object-cover"
             style={{ transform: 'scale(1.2)' }}
+            aria-hidden="true"
           />
         </div>
         

@@ -1,6 +1,8 @@
-<svg width="150" height="150" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="150" height="150" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Choctaw Nation Great Seal">
   <!-- Choctaw Nation Great Seal Placeholder -->
   <!-- Minimum size: 125px per brand standards -->
+  <title>Choctaw Nation of Oklahoma - Great Seal</title>
+  <desc>Official seal of the Choctaw Nation of Oklahoma featuring rope borders and Great Seal colors</desc>
   
   <!-- Outer rope border (wider) -->
   <circle cx="75" cy="75" r="72" fill="none" stroke="#8B7355" stroke-width="4"/>

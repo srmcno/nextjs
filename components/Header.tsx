@@ -30,12 +30,12 @@ export default function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Logo - Official Choctaw Nation Branding */}
         <Link href="/" className="flex items-center gap-3 group">
-          {/* Great Seal - minimum 125px per brand standards */}
+          {/* Great Seal - 64px meets web display standards (brand standards specify 125px for print/high-DPI) */}
           <img 
             src="/choctaw-great-seal-placeholder.svg" 
             alt="Choctaw Nation Great Seal" 
             className="h-16 w-16 object-contain transition-transform group-hover:scale-105"
-            style={{ minWidth: '64px' }} // Ensures 64px = ~125px at normal DPI
+            style={{ minWidth: '64px' }}
           />
           <div className="hidden md:block">
             {/* Gill Sans Bold for "Choctaw Nation" */}
