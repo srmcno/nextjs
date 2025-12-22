@@ -1,0 +1,61 @@
+<svg width="400" height="200" viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Choctaw Nation Division of Legal & Compliance -->
+  <!-- Department of Natural Resources - Water Program Logo -->
+  <!-- Horizontal "Flush Right" Layout -->
+  
+  <!-- Great Seal (smaller version for logo) -->
+  <g transform="translate(20, 50)">
+    <!-- Outer rope border -->
+    <circle cx="50" cy="50" r="48" fill="none" stroke="#8B7355" stroke-width="2.5"/>
+    <circle cx="50" cy="50" r="45" fill="none" stroke="#8B7355" stroke-width="1.5"/>
+    
+    <!-- Inner rope border -->
+    <circle cx="50" cy="50" r="40" fill="none" stroke="#8B7355" stroke-width="2.5"/>
+    <circle cx="50" cy="50" r="37" fill="none" stroke="#8B7355" stroke-width="1.5"/>
+    
+    <!-- Main seal background -->
+    <circle cx="50" cy="50" r="36" fill="#009ADA"/>
+    
+    <!-- Red star -->
+    <path d="M50 20 L53 30 L63 30 L55 36 L58 46 L50 40 L42 46 L45 36 L37 30 L47 30 Z" fill="#EF373E"/>
+    
+    <!-- Yellow center -->
+    <circle cx="50" cy="50" r="16" fill="#C9A904"/>
+    
+    <text x="50" y="52" text-anchor="middle" font-family="Gill Sans, Gill Sans MT" font-size="7" font-weight="700" fill="#421400">SEAL</text>
+  </g>
+  
+  <!-- Text content - Flush Right Layout -->
+  <g transform="translate(130, 35)">
+    <!-- "Choctaw Nation" - Gill Sans Bold -->
+    <text x="0" y="20" font-family="Gill Sans, Gill Sans MT, Calibri, sans-serif" font-size="24" font-weight="700" fill="#421400">
+      CHOCTAW NATION
+    </text>
+    
+    <!-- "Division of Legal & Compliance" - Gill Sans Bold -->
+    <text x="0" y="45" font-family="Gill Sans, Gill Sans MT, Calibri, sans-serif" font-size="16" font-weight="700" fill="#421400">
+      Division of Legal &amp; Compliance
+    </text>
+    
+    <!-- "Department of Natural Resources" - Gill Sans Light, Brown -->
+    <text x="0" y="70" font-family="Gill Sans, Gill Sans MT, Calibri, sans-serif" font-size="14" font-weight="300" fill="#421400">
+      Department of Natural Resources
+    </text>
+    
+    <!-- Program Descriptor: "Water Resource Management" - PMS 356 Green, one line space below -->
+    <text x="0" y="95" font-family="Gill Sans, Gill Sans MT, Calibri, sans-serif" font-size="13" font-weight="400" fill="#00853E">
+      Water Resource Management
+    </text>
+    
+    <!-- Alternative descriptor on next line -->
+    <text x="0" y="112" font-family="Gill Sans, Gill Sans MT, Calibri, sans-serif" font-size="12" font-weight="400" fill="#00853E">
+      Environmental Protection Services
+    </text>
+  </g>
+  
+  <!-- Placeholder indicator -->
+  <rect x="5" y="5" width="390" height="190" fill="none" stroke="#00853E" stroke-width="2" stroke-dasharray="5,5" opacity="0.3"/>
+  <text x="200" y="185" text-anchor="middle" font-family="Gill Sans, Gill Sans MT" font-size="10" fill="#666" opacity="0.6">
+    LOGO PLACEHOLDER - Replace with official artwork
+  </text>
+</svg>

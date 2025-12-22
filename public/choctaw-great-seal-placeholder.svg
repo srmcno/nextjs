@@ -1,0 +1,36 @@
+<svg width="150" height="150" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Choctaw Nation Great Seal Placeholder -->
+  <!-- Minimum size: 125px per brand standards -->
+  
+  <!-- Outer rope border (wider) -->
+  <circle cx="75" cy="75" r="72" fill="none" stroke="#8B7355" stroke-width="4"/>
+  <circle cx="75" cy="75" r="68" fill="none" stroke="#8B7355" stroke-width="2"/>
+  
+  <!-- Inner rope border -->
+  <circle cx="75" cy="75" r="60" fill="none" stroke="#8B7355" stroke-width="4"/>
+  <circle cx="75" cy="75" r="56" fill="none" stroke="#8B7355" stroke-width="2"/>
+  
+  <!-- Main seal background -->
+  <circle cx="75" cy="75" r="54" fill="#009ADA"/>
+  
+  <!-- Red star points -->
+  <path d="M75 25 L79 40 L94 40 L82 49 L86 64 L75 55 L64 64 L68 49 L56 40 L71 40 Z" fill="#EF373E"/>
+  
+  <!-- Yellow center circle -->
+  <circle cx="75" cy="75" r="25" fill="#C9A904"/>
+  
+  <!-- Placeholder text -->
+  <text x="75" y="75" text-anchor="middle" font-family="Gill Sans, Gill Sans MT, Calibri, sans-serif" font-size="10" font-weight="700" fill="#421400" dy="4">SEAL</text>
+  <text x="75" y="90" text-anchor="middle" font-family="Gill Sans, Gill Sans MT, Calibri, sans-serif" font-size="8" fill="#421400">PLACEHOLDER</text>
+  
+  <!-- Outer text (requires official artwork) -->
+  <path id="topArc" d="M 20,75 A 55,55 0 0,1 130,75" fill="none"/>
+  <text font-family="Gill Sans, Gill Sans MT, Calibri, sans-serif" font-size="9" font-weight="700" fill="#421400">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">CHOCTAW NATION</textPath>
+  </text>
+  
+  <path id="bottomArc" d="M 130,75 A 55,55 0 0,1 20,75" fill="none"/>
+  <text font-family="Gill Sans, Gill Sans MT, Calibri, sans-serif" font-size="9" fill="#421400">
+    <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">OF OKLAHOMA</textPath>
+  </text>
+</svg>
