@@ -1,13 +1,24 @@
 @import "tailwindcss";
 
 body {
-  /* Using the configured modern font stack */
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: #f8fafc; /* Slate-50 */
-  color: #0f172a; /* Slate-900 */
+  /* Gill Sans font family per Choctaw Nation Brand Standards */
+  font-family: 'Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', sans-serif;
+  background-color: #ffffff; /* White background per brand standards for high contrast */
+  color: #0f172a; /* Slate-900 for text */
 }
 
 /* Smooth scrolling for anchor links */
 html {
   scroll-behavior: smooth;
+}
+
+/* Brand Standard Typography Classes */
+.font-choctaw-bold {
+  font-family: 'Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', sans-serif;
+  font-weight: 700; /* Bold for "Choctaw Nation" and division names */
+}
+
+.font-choctaw-light {
+  font-family: 'Gill Sans', 'Gill Sans MT', 'Calibri', 'Trebuchet MS', sans-serif;
+  font-weight: 300; /* Light for department names */
 }

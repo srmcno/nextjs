@@ -20,24 +20,24 @@ interface LakeCardProps {
 
 const ALERT_CONFIG: Record<AlertLevel, { badgeColor: string; borderColor: string; headerBg: string }> = {
   normal: {
-    badgeColor: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-600/20',
-    borderColor: 'border-slate-200 hover:border-emerald-300',
-    headerBg: 'bg-gradient-to-r from-slate-50 to-emerald-50/50'
+    badgeColor: 'bg-choctaw-green/10 text-choctaw-green ring-1 ring-choctaw-green/20',
+    borderColor: 'border-gray-200 hover:border-choctaw-green/30',
+    headerBg: 'bg-gradient-to-r from-white to-choctaw-green/5'
   },
   watch: {
-    badgeColor: 'bg-sky-100 text-sky-800 ring-1 ring-sky-600/20',
-    borderColor: 'border-sky-200 hover:border-sky-300',
-    headerBg: 'bg-gradient-to-r from-slate-50 to-sky-50/50'
+    badgeColor: 'bg-choctaw-sealBlue/10 text-choctaw-sealBlue ring-1 ring-choctaw-sealBlue/20',
+    borderColor: 'border-choctaw-sealBlue/20 hover:border-choctaw-sealBlue/30',
+    headerBg: 'bg-gradient-to-r from-white to-choctaw-sealBlue/5'
   },
   warning: {
-    badgeColor: 'bg-amber-100 text-amber-800 ring-1 ring-amber-600/20',
-    borderColor: 'border-amber-200 hover:border-amber-300',
-    headerBg: 'bg-gradient-to-r from-slate-50 to-amber-50/50'
+    badgeColor: 'bg-choctaw-sealYellow/10 text-choctaw-brown ring-1 ring-choctaw-sealYellow/20',
+    borderColor: 'border-choctaw-sealYellow/20 hover:border-choctaw-sealYellow/30',
+    headerBg: 'bg-gradient-to-r from-white to-choctaw-sealYellow/5'
   },
   critical: {
-    badgeColor: 'bg-rose-100 text-rose-800 ring-1 ring-rose-600/20',
-    borderColor: 'border-rose-200 hover:border-rose-300',
-    headerBg: 'bg-gradient-to-r from-slate-50 to-rose-50/50'
+    badgeColor: 'bg-choctaw-sealRed/10 text-choctaw-sealRed ring-1 ring-choctaw-sealRed/20',
+    borderColor: 'border-choctaw-sealRed/20 hover:border-choctaw-sealRed/30',
+    headerBg: 'bg-gradient-to-r from-white to-choctaw-sealRed/5'
   }
 }
 
