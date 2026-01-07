@@ -4,24 +4,37 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Modern system stack for best mobile readability
+        // Gill Sans family - using web-safe alternatives
+        // Gill Sans -> Gill Sans MT -> Calibri -> sans-serif fallback
         sans: [
-          'system-ui',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'Helvetica Neue',
-          'Arial',
+          'Gill Sans',
+          'Gill Sans MT',
+          'Calibri',
+          'Trebuchet MS',
           'sans-serif'
         ]
       },
       colors: {
-        // Custom settlement-themed colors
+        // Official Choctaw Nation Brand Colors
+        choctaw: {
+          // Primary Brand Colors
+          brown: '#421400',      // PMS 4625 - Primary logo brown
+          green: '#00853E',      // PMS 356 - Natural Resources/Environmental
+          
+          // Great Seal Colors
+          sealBlue: '#009ADA',   // PMS 2925
+          sealRed: '#EF373E',    // PMS 1795
+          sealYellow: '#C9A904', // PMS 116
+          
+          // Lighter variations for backgrounds
+          brownLight: '#5a1c00',
+          greenLight: '#00a84d',
+        },
+        // Legacy colors for backward compatibility
         settlement: {
-          blue: '#0284c7', // Sky-600
-          teal: '#0d9488', // Teal-600
-          navy: '#0f172a', // Slate-900
+          blue: '#009ADA',       // Updated to Great Seal Blue
+          teal: '#00853E',       // Updated to Natural Resources Green
+          navy: '#421400',       // Updated to Choctaw Brown
         }
       }
     }

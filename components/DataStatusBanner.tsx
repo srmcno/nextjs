@@ -64,21 +64,21 @@ export default function DataStatusBanner({ persistent = false }: DataStatusBanne
   }
 
   return (
-    <div className="border-b-2 border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50">
+    <div className="border-b-2 border-choctaw-sealYellow bg-gradient-to-r from-choctaw-sealYellow/5 to-choctaw-sealYellow/10">
       <div className="mx-auto max-w-7xl px-4 py-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-200 text-lg">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-choctaw-sealYellow/30 text-lg">
                 ⚡
               </div>
             </div>
             <div className="flex-1">
-              <div className="font-bold text-amber-900">
+              <div className="font-bold text-choctaw-brown">
                 {dataSource === 'mock' && 'Demo Data Mode'}
                 {dataSource === 'mixed' && 'Partial Live Data'}
               </div>
-              <div className="mt-1 text-sm text-amber-800">
+              <div className="mt-1 text-sm text-choctaw-brown/80">
                 {dataSource === 'mock' && (
                   <>
                     You&apos;re viewing simulated data for demonstration purposes. The USGS live data service is currently unavailable.
@@ -97,7 +97,7 @@ export default function DataStatusBanner({ persistent = false }: DataStatusBanne
                   href="https://waterdata.usgs.gov/nwis/rt"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-lg bg-amber-200 px-3 py-1 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-300"
+                  className="inline-flex items-center gap-1 rounded-lg bg-choctaw-sealYellow/30 px-3 py-1 text-xs font-semibold text-choctaw-brown transition-colors hover:bg-choctaw-sealYellow/40"
                 >
                   Check USGS Status
                   <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,7 +106,7 @@ export default function DataStatusBanner({ persistent = false }: DataStatusBanne
                 </a>
                 <button
                   onClick={() => window.location.reload()}
-                  className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+                  className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1 text-xs font-semibold text-choctaw-brown transition-colors hover:bg-choctaw-sealYellow/10"
                 >
                   <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -119,7 +119,7 @@ export default function DataStatusBanner({ persistent = false }: DataStatusBanne
           {!persistent && (
             <button
               onClick={handleDismiss}
-              className="flex-shrink-0 rounded-lg p-1 text-amber-700 transition-colors hover:bg-amber-200"
+              className="flex-shrink-0 rounded-lg p-1 text-choctaw-brown/70 transition-colors hover:bg-choctaw-sealYellow/20"
               aria-label="Dismiss banner"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

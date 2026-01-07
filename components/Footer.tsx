@@ -2,23 +2,30 @@ import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className="border-t border-gray-800 bg-[#1a1a2e]">
+    <footer className="border-t border-choctaw-brown/20 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-10">
         <div className="grid gap-8 md:grid-cols-4">
-          {/* Brand */}
+          {/* Brand - Official Choctaw Nation */}
           <div className="md:col-span-2">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-sky-600 to-slate-700">
-                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                </svg>
-              </div>
+            <div className="flex items-start gap-3">
+              {/* Great Seal - Minimum 75px for one-color footer usage */}
+              <img 
+                src="/choctaw-great-seal-placeholder.svg" 
+                alt="Choctaw Nation Great Seal" 
+                className="h-16 w-16 object-contain flex-shrink-0"
+              />
               <div>
-                <div className="font-bold text-white">Water Settlement Portal</div>
-                <div className="text-sm text-gray-400">Choctaw–Chickasaw Nations</div>
+                {/* Gill Sans Bold */}
+                <div className="font-bold text-choctaw-brown text-lg">Choctaw Nation</div>
+                <div className="text-sm font-bold text-choctaw-brown">Division of Legal &amp; Compliance</div>
+                {/* Gill Sans Light */}
+                <div className="text-xs font-light text-choctaw-brown">Department of Natural Resources</div>
+                {/* PMS 356 Green for program */}
+                <div className="text-xs text-choctaw-green mt-1">Water Resource Management</div>
+                <div className="text-xs text-choctaw-green">Environmental Protection Services</div>
               </div>
             </div>
-            <p className="mt-4 max-w-md text-sm text-gray-400">
+            <p className="mt-4 max-w-md text-sm text-gray-600">
               Providing transparent, real-time access to water conditions across the
               Choctaw-Chickasaw Water Settlement area in southeastern Oklahoma.
             </p>
@@ -26,33 +33,33 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-white">Quick Links</h3>
+            <h3 className="font-semibold text-choctaw-brown">Quick Links</h3>
             <ul className="mt-4 space-y-2 text-sm">
               <li>
-                <Link href="/" className="text-gray-400 hover:text-white">Home</Link>
+                <Link href="/" className="text-gray-600 hover:text-choctaw-green transition-colors">Home</Link>
               </li>
               <li>
-                <Link href="/dashboard" className="text-gray-400 hover:text-white">Live Dashboard</Link>
+                <Link href="/dashboard" className="text-gray-600 hover:text-choctaw-green transition-colors">Live Dashboard</Link>
               </li>
               <li>
-                <Link href="/game" className="text-gray-400 hover:text-white">Water Game</Link>
+                <Link href="/game" className="text-gray-600 hover:text-choctaw-green transition-colors">Water Game</Link>
               </li>
               <li>
-                <Link href="/settlement" className="text-gray-400 hover:text-white">Settlement Info</Link>
+                <Link href="/settlement" className="text-gray-600 hover:text-choctaw-green transition-colors">Settlement Info</Link>
               </li>
             </ul>
           </div>
 
           {/* Data Sources */}
           <div>
-            <h3 className="font-semibold text-white">Data Sources</h3>
+            <h3 className="font-semibold text-choctaw-brown">Data Sources</h3>
             <ul className="mt-4 space-y-2 text-sm">
               <li>
                 <a
                   href="https://waterdata.usgs.gov/ok/nwis/"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-600 hover:text-choctaw-green transition-colors"
                 >
                   USGS Water Data
                 </a>
@@ -62,7 +69,7 @@ export default function Footer() {
                   href="https://www.swt-wc.usace.army.mil/"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-600 hover:text-choctaw-green transition-colors"
                 >
                   USACE Tulsa District
                 </a>
@@ -72,7 +79,7 @@ export default function Footer() {
                   href="https://www.owrb.ok.gov/"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-600 hover:text-choctaw-green transition-colors"
                 >
                   OK Water Resources Board
                 </a>
@@ -82,13 +89,13 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-gray-800 pt-8 text-sm text-gray-500 md:flex-row">
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-choctaw-brown/20 pt-8 text-sm text-gray-600 md:flex-row">
           <div>
-            © {new Date().getFullYear()} Water Settlement Portal. Data provided by USGS.
+            © {new Date().getFullYear()} Choctaw Nation of Oklahoma. Data provided by USGS.
           </div>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-2">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
+              <span className="h-2 w-2 animate-pulse rounded-full bg-choctaw-green"></span>
               Live Data
             </span>
             <span>|</span>

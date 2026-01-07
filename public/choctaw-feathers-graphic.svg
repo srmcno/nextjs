@@ -1,0 +1,81 @@
+<svg width="800" height="1200" viewBox="0 0 800 1200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Choctaw Nation Decorative Feathers">
+  <!-- Choctaw Nation Feathers Graphic -->
+  <!-- Decorative supergraphic for use as cropped, bleeding element -->
+  <title>Choctaw Nation Feathers</title>
+  <desc>Decorative graphic featuring traditional feather motifs in Choctaw Nation brand colors</desc>
+  
+  <!-- Feather 1 - Large, angled -->
+  <g transform="translate(100, 50) rotate(-15, 100, 400)">
+    <!-- Central shaft -->
+    <rect x="95" y="0" width="10" height="800" fill="#421400" rx="5"/>
+    
+    <!-- Vanes - left side -->
+    <path d="M 100 50 Q 20 100, 30 150 L 95 120 Z" fill="#00853E" opacity="0.7"/>
+    <path d="M 100 150 Q 15 200, 25 250 L 95 220 Z" fill="#00853E" opacity="0.75"/>
+    <path d="M 100 250 Q 10 300, 20 350 L 95 320 Z" fill="#00853E" opacity="0.8"/>
+    <path d="M 100 350 Q 5 400, 15 450 L 95 420 Z" fill="#00853E" opacity="0.85"/>
+    <path d="M 100 450 Q 10 500, 20 550 L 95 520 Z" fill="#00853E" opacity="0.9"/>
+    <path d="M 100 550 Q 15 600, 25 650 L 95 620 Z" fill="#00853E" opacity="0.85"/>
+    <path d="M 100 650 Q 20 700, 30 750 L 95 720 Z" fill="#00853E" opacity="0.8"/>
+    
+    <!-- Vanes - right side -->
+    <path d="M 100 50 Q 180 100, 170 150 L 105 120 Z" fill="#00853E" opacity="0.7"/>
+    <path d="M 100 150 Q 185 200, 175 250 L 105 220 Z" fill="#00853E" opacity="0.75"/>
+    <path d="M 100 250 Q 190 300, 180 350 L 105 320 Z" fill="#00853E" opacity="0.8"/>
+    <path d="M 100 350 Q 195 400, 185 450 L 105 420 Z" fill="#00853E" opacity="0.85"/>
+    <path d="M 100 450 Q 190 500, 180 550 L 105 520 Z" fill="#00853E" opacity="0.9"/>
+    <path d="M 100 550 Q 185 600, 175 650 L 105 620 Z" fill="#00853E" opacity="0.85"/>
+    <path d="M 100 650 Q 180 700, 170 750 L 105 720 Z" fill="#00853E" opacity="0.8"/>
+    
+    <!-- Tip -->
+    <path d="M 100 0 L 80 40 L 100 35 L 120 40 Z" fill="#421400"/>
+  </g>
+  
+  <!-- Feather 2 - Medium, different angle -->
+  <g transform="translate(500, 200) rotate(10, 80, 350)">
+    <!-- Central shaft -->
+    <rect x="75" y="0" width="8" height="700" fill="#421400" rx="4"/>
+    
+    <!-- Vanes - simplified, using brown -->
+    <path d="M 80 50 Q 20 90, 25 130 L 75 110 Z" fill="#421400" opacity="0.4"/>
+    <path d="M 80 130 Q 15 170, 20 210 L 75 190 Z" fill="#421400" opacity="0.45"/>
+    <path d="M 80 210 Q 10 250, 15 290 L 75 270 Z" fill="#421400" opacity="0.5"/>
+    <path d="M 80 290 Q 5 330, 10 370 L 75 350 Z" fill="#421400" opacity="0.55"/>
+    <path d="M 80 370 Q 10 410, 15 450 L 75 430 Z" fill="#421400" opacity="0.5"/>
+    <path d="M 80 450 Q 15 490, 20 530 L 75 510 Z" fill="#421400" opacity="0.45"/>
+    <path d="M 80 530 Q 20 570, 25 610 L 75 590 Z" fill="#421400" opacity="0.4"/>
+    
+    <path d="M 80 50 Q 140 90, 135 130 L 85 110 Z" fill="#421400" opacity="0.4"/>
+    <path d="M 80 130 Q 145 170, 140 210 L 85 190 Z" fill="#421400" opacity="0.45"/>
+    <path d="M 80 210 Q 150 250, 145 290 L 85 270 Z" fill="#421400" opacity="0.5"/>
+    <path d="M 80 290 Q 155 330, 150 370 L 85 350 Z" fill="#421400" opacity="0.55"/>
+    <path d="M 80 370 Q 150 410, 145 450 L 85 430 Z" fill="#421400" opacity="0.5"/>
+    <path d="M 80 450 Q 145 490, 140 530 L 85 510 Z" fill="#421400" opacity="0.45"/>
+    <path d="M 80 530 Q 140 570, 135 610 L 85 590 Z" fill="#421400" opacity="0.4"/>
+    
+    <!-- Tip -->
+    <path d="M 80 0 L 65 35 L 80 30 L 95 35 Z" fill="#421400"/>
+  </g>
+  
+  <!-- Feather 3 - Small accent -->
+  <g transform="translate(300, 600) rotate(-25, 60, 250)">
+    <!-- Central shaft -->
+    <rect x="57" y="0" width="6" height="500" fill="#00853E" rx="3"/>
+    
+    <!-- Simplified vanes in green -->
+    <path d="M 60 40 Q 20 70, 23 100 L 57 85 Z" fill="#00853E" opacity="0.6"/>
+    <path d="M 60 100 Q 17 130, 20 160 L 57 145 Z" fill="#00853E" opacity="0.65"/>
+    <path d="M 60 160 Q 15 190, 18 220 L 57 205 Z" fill="#00853E" opacity="0.7"/>
+    <path d="M 60 220 Q 17 250, 20 280 L 57 265 Z" fill="#00853E" opacity="0.65"/>
+    <path d="M 60 280 Q 20 310, 23 340 L 57 325 Z" fill="#00853E" opacity="0.6"/>
+    
+    <path d="M 60 40 Q 100 70, 97 100 L 63 85 Z" fill="#00853E" opacity="0.6"/>
+    <path d="M 60 100 Q 103 130, 100 160 L 63 145 Z" fill="#00853E" opacity="0.65"/>
+    <path d="M 60 160 Q 105 190, 102 220 L 63 205 Z" fill="#00853E" opacity="0.7"/>
+    <path d="M 60 220 Q 103 250, 100 280 L 63 265 Z" fill="#00853E" opacity="0.65"/>
+    <path d="M 60 280 Q 100 310, 97 340 L 63 325 Z" fill="#00853E" opacity="0.6"/>
+    
+    <!-- Tip -->
+    <path d="M 60 0 L 50 28 L 60 24 L 70 28 Z" fill="#00853E"/>
+  </g>
+</svg>

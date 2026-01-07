@@ -26,18 +26,30 @@ export default function Header() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-700 bg-[#0b1b3b]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0b1b3b]/80">
+    <header className="sticky top-0 z-50 border-b border-choctaw-brown/20 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90 shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        {/* Logo */}
+        {/* Logo - Official Choctaw Nation Branding */}
         <Link href="/" className="flex items-center gap-3 group">
+          {/* Great Seal - 64px meets web display standards (brand standards specify 125px for print/high-DPI) */}
           <img 
-            src="https://i.imgur.com/R7iU4ao.png" 
-            alt="Water Settlement Portal Logo" 
-            className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
+            src="/choctaw-great-seal-placeholder.svg" 
+            alt="Choctaw Nation Great Seal" 
+            className="h-16 w-16 object-contain transition-transform group-hover:scale-105"
+            style={{ minWidth: '64px' }}
           />
-          <div className="hidden sm:block">
-            <div className="font-bold text-white leading-tight">Water Settlement Portal</div>
-            <div className="text-xs text-slate-300">Choctaw–Chickasaw Nations</div>
+          <div className="hidden md:block">
+            {/* Gill Sans Bold for "Choctaw Nation" */}
+            <div className="font-bold text-choctaw-brown leading-tight text-lg">Choctaw Nation</div>
+            <div className="text-sm font-bold text-choctaw-brown">Division of Legal &amp; Compliance</div>
+            {/* Gill Sans Light for Department */}
+            <div className="text-xs font-light text-choctaw-brown">Department of Natural Resources</div>
+            {/* PMS 356 Green for program descriptor */}
+            <div className="text-xs text-choctaw-green font-normal">Water Resource Management</div>
+          </div>
+          {/* Mobile: Show simplified branding */}
+          <div className="block md:hidden">
+            <div className="font-bold text-choctaw-brown text-sm leading-tight">Choctaw Nation</div>
+            <div className="text-xs text-choctaw-green">Water Portal</div>
           </div>
         </Link>
 
@@ -47,17 +59,17 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-choctaw-brown transition-colors hover:bg-choctaw-green/10 hover:text-choctaw-green"
             >
               {link.label}
             </Link>
           ))}
           
-          {/* Live Status Indicator */}
-          <div className="ml-4 flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1.5 text-xs font-medium text-emerald-300 border border-emerald-500/30">
+          {/* Live Status Indicator - using brand green */}
+          <div className="ml-4 flex items-center gap-2 rounded-full bg-choctaw-green/20 px-3 py-1.5 text-xs font-medium text-choctaw-green border border-choctaw-green/30">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-choctaw-green opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-choctaw-green"></span>
             </span>
             Live Data
           </div>
@@ -66,7 +78,7 @@ export default function Header() {
         {/* Mobile Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden rounded-lg p-2 text-slate-300 hover:bg-white/10 hover:text-white"
+          className="md:hidden rounded-lg p-2 text-choctaw-brown hover:bg-choctaw-green/10 hover:text-choctaw-green"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
@@ -83,14 +95,14 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <nav className="md:hidden border-t border-slate-700 bg-[#0b1b3b] px-4 py-3">
+        <nav className="md:hidden border-t border-choctaw-brown/20 bg-white px-4 py-3">
           <div className="flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg px-4 py-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-lg px-4 py-3 text-sm font-medium text-choctaw-brown transition-colors hover:bg-choctaw-green/10 hover:text-choctaw-green"
               >
                 {link.label}
               </Link>
@@ -98,10 +110,10 @@ export default function Header() {
           </div>
           
           {/* Mobile Live Status */}
-          <div className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-emerald-500/20 py-2 text-xs font-medium text-emerald-300 border border-emerald-500/30">
+          <div className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-choctaw-green/20 py-2 text-xs font-medium text-choctaw-green border border-choctaw-green/30">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-choctaw-green opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-choctaw-green"></span>
             </span>
             Live Data Active
           </div>
