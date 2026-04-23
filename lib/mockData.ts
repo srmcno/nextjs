@@ -1,15 +1,15 @@
 /**
- * Mock USGS data for development and demo purposes
- * This simulates realistic water level and flow data with proper trends
+ * Simulated USGS/USACE data used when the upstream APIs are unavailable.
+ * Keys mirror the USGS site IDs declared in SETTLEMENT_WATER_BODIES and
+ * OKC_RESERVOIR_SYSTEM so any registered water body has a realistic fallback.
  */
 
-interface MockDataPoint {
+export interface MockDataPoint {
   dateTime: string
   value: string
   qualifiers?: string[]
 }
 
-// Generate realistic mock data points with trends and patterns
 function generateMockData(
   baseValue: number,
   variance: number,
@@ -21,16 +21,11 @@ function generateMockData(
   const points: MockDataPoint[] = []
 
   for (let i = count; i >= 0; i--) {
-    const timestamp = new Date(now.getTime() - i * 15 * 60 * 1000) // 15 minute intervals
-
-    // Add daily cycle (small variation based on time of day)
+    const timestamp = new Date(now.getTime() - i * 15 * 60 * 1000)
     const hour = timestamp.getHours()
     const dailyCycle = Math.sin((hour / 24) * Math.PI * 2) * variance * 0.3
-
-    // Add random noise
     const noise = (Math.random() - 0.5) * variance * 1.5
 
-    // Add trend
     let trendValue = 0
     if (trendDirection === 'rising') {
       trendValue = ((count - i) / count) * trendStrength
@@ -38,19 +33,16 @@ function generateMockData(
       trendValue = -((count - i) / count) * trendStrength
     }
 
-    const value = baseValue + dailyCycle + noise + trendValue
-
     points.push({
       dateTime: timestamp.toISOString(),
-      value: value.toFixed(2),
-      qualifiers: ['P'] // Provisional data
+      value: (baseValue + dailyCycle + noise + trendValue).toFixed(2),
+      qualifiers: ['P']
     })
   }
 
   return points
 }
 
-// Generate river flow data with more realistic patterns
 function generateRiverFlowData(
   baseFlow: number,
   variance: number,
@@ -61,13 +53,8 @@ function generateRiverFlowData(
 
   for (let i = count; i >= 0; i--) {
     const timestamp = new Date(now.getTime() - i * 15 * 60 * 1000)
-
-    // Rivers have more variation and can have sudden spikes from rainfall
     const noise = (Math.random() - 0.5) * variance * 2
-
-    // Occasional spike to simulate storm events
     const spike = Math.random() < 0.02 ? variance * 3 * Math.random() : 0
-
     const value = Math.max(baseFlow * 0.3, baseFlow + noise + spike)
 
     points.push({
@@ -80,101 +67,91 @@ function generateRiverFlowData(
   return points
 }
 
-// Mock data for each water body with realistic patterns
-export const MOCK_WATER_DATA: Record<string, { parameterCode: string; data: MockDataPoint[] }> = {
-  // === SETTLEMENT WATER BODIES ===
-  '07335775': { // Sardis Lake - Conservation pool 599, currently in watch zone
+interface MockSite {
+  parameterCode: string
+  generator: () => MockDataPoint[]
+}
+
+// Keyed by USGS site ID — must match SETTLEMENT_WATER_BODIES and OKC_RESERVOIR_SYSTEM.
+export const MOCK_WATER_DATA: Record<string, MockSite> = {
+  // === Settlement water bodies ===
+  '07335775': { // Sardis Lake — conservation pool 599 ft, drifting toward OKC withdrawal floor
     parameterCode: '62614',
-    data: generateMockData(592.5, 0.6, 96, 'falling', 2.0) // Falling trend, approaching OKC withdrawal threshold
+    generator: () => generateMockData(596.8, 0.5, 96, 'falling', 1.2)
   },
-  '07333900': { // McGee Creek - Near conservation pool (also part of OKC system)
+  '07335500': { // Hugo Lake — slightly below conservation pool (404.5 ft), recovering
     parameterCode: '62614',
-    data: generateMockData(574.5, 0.8, 96, 'stable', 0.5)
+    generator: () => generateMockData(402.4, 0.7, 96, 'rising', 0.9)
   },
-  '07336000': { // Hugo Lake - Below conservation pool, watch status
+  '07333910': { // McGee Creek Reservoir — settlement water body, near conservation pool (577.1 ft)
     parameterCode: '62614',
-    data: generateMockData(389.2, 0.9, 96, 'rising', 1.5) // Recovering
+    generator: () => generateMockData(575.9, 0.6, 96, 'stable', 0.3)
   },
-  '07337900': { // Broken Bow - At conservation pool, normal status
+  '07333010': { // Atoka Lake — conservation pool 590 ft
     parameterCode: '62614',
-    data: generateMockData(599.1, 0.4, 96, 'stable', 0)
+    generator: () => generateMockData(587.3, 0.5, 96, 'stable', 0.3)
   },
-  '07338500': { // Pine Creek - Slightly below conservation
+  '07336500': { // Broken Bow Lake — conservation pool 599.5 ft
     parameterCode: '62614',
-    data: generateMockData(434.8, 0.7, 96, 'falling', 1.0)
+    generator: () => generateMockData(598.6, 0.4, 96, 'stable', 0.1)
   },
-  '07245500': { // Eufaula - Good level
-    parameterCode: '62614',
-    data: generateMockData(584.2, 0.5, 96, 'rising', 0.8)
-  },
-  '07247000': { // Wister - Below conservation pool
-    parameterCode: '62614',
-    data: generateMockData(472.3, 0.6, 96, 'falling', 0.5)
-  },
-  // Kiamichi River monitoring stations
-  '07335700': { // Kiamichi River near Big Cedar - Upper river
+  '07335790': { // Kiamichi River nr Clayton — immediately downstream of Sardis releases
     parameterCode: '00060',
-    data: generateRiverFlowData(95, 18)
+    generator: () => generateRiverFlowData(140, 22)
   },
-  '07336500': { // Kiamichi River at Moyers - CRITICAL: Point of Diversion for OKC
-    // Per WSA: 50 cfs must bypass when City diverts up to 250 cfs (total flow required: 300 cfs)
+  '07336200': { // Kiamichi River nr Antlers — downstream basin health
     parameterCode: '00060',
-    data: generateRiverFlowData(285, 35) // Healthy flow allowing full diversion with bypass
-  },
-  '07336200': { // Kiamichi River near Antlers - Downstream
-    parameterCode: '00060',
-    data: generateRiverFlowData(165, 25)
+    generator: () => generateRiverFlowData(185, 28)
   },
 
-  // === OKC RESERVOIR SYSTEM (per Exhibit 13) ===
-  // All 6 reservoirs now have verified USGS station IDs
-
-  '07333010': { // Atoka Reservoir - Primary OKC supply reservoir
-    // https://waterdata.usgs.gov/monitoring-location/USGS-07333010/
-    parameterCode: '00065',
-    data: generateMockData(585.8, 0.5, 96, 'stable', 0.3) // ~89% of live storage
+  // === OKC reservoir system (Exhibit 13) ===
+  '07238500': { // Canton Lake — 30% transit loss pre-applied; ~62% of capacity
+    parameterCode: '62614',
+    generator: () => generateMockData(1608.2, 1.2, 96, 'stable', 0.2)
   },
-  '07238500': { // Canton Lake - OKC system (30% transit loss applies)
-    // https://waterdata.usgs.gov/monitoring-location/USGS-07238500/
-    parameterCode: '00065',
-    data: generateMockData(1608.2, 1.2, 96, 'stable', 0.2) // ~62% of capacity
+  '07240500': { // Lake Overholser — ~62% of capacity
+    parameterCode: '62614',
+    generator: () => generateMockData(1237.8, 0.4, 96, 'stable', 0.1)
   },
-  '07229445': { // Stanley Draper Lake - DROUGHT CRITICAL reservoir
-    // https://waterdata.usgs.gov/monitoring-location/USGS-07229445/
-    parameterCode: '00065',
-    data: generateMockData(1182.5, 0.8, 96, 'falling', 0.5) // ~81% of capacity
+  '07159550': { // Lake Hefner — drought-critical (~86% of capacity)
+    parameterCode: '62614',
+    generator: () => generateMockData(1194.3, 0.6, 96, 'stable', 0.3)
   },
-  '07159550': { // Lake Hefner - DROUGHT CRITICAL reservoir
-    // https://waterdata.usgs.gov/monitoring-location/USGS-07159550/
-    parameterCode: '00065',
-    data: generateMockData(1194.3, 0.6, 96, 'stable', 0.3) // ~86% of capacity
+  '07229445': { // Stanley Draper Lake — drought-critical (~81% of capacity)
+    parameterCode: '62614',
+    generator: () => generateMockData(1182.5, 0.8, 96, 'falling', 0.5)
   },
-  '07240500': { // Lake Overholser - OKC system
-    // https://waterdata.usgs.gov/monitoring-location/USGS-07240500/
-    parameterCode: '00065',
-    data: generateMockData(1237.8, 0.4, 96, 'stable', 0.1) // ~62% of capacity
+  '07333900': { // McGee Creek as modeled by the OKC system registry
+    parameterCode: '62614',
+    generator: () => generateMockData(574.5, 0.8, 96, 'stable', 0.5)
   }
 }
 
 export function getMockData(siteId: string) {
   const mockSite = MOCK_WATER_DATA[siteId]
+  if (!mockSite) return null
 
-  if (!mockSite) {
-    return null
-  }
-
-  // Return mock data in USGS JSON format
   return {
     value: {
       timeSeries: [
         {
           values: [
             {
-              value: mockSite.data
+              value: mockSite.generator()
             }
           ]
         }
       ]
     }
   }
+}
+
+export function getMockUsaceValues(siteId: string) {
+  const mockSite = MOCK_WATER_DATA[siteId]
+  if (!mockSite) return null
+
+  return mockSite.generator().map((p) => ({
+    dateTime: p.dateTime,
+    value: Number(p.value)
+  }))
 }

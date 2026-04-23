@@ -139,7 +139,13 @@ export default function PixelLakeScene({
     // Calculate water surface based on lake level (normalized 589-600 ft range)
     const waterSurfaceY = 320 - ((lakeLevel - 585) / (600 - 585)) * 140
 
-    const drawPixelRect = (x: number, y: number, w: number, h: number, color: string) => {
+    const drawPixelRect = (
+      x: number,
+      y: number,
+      w: number,
+      h: number,
+      color: string | CanvasGradient | CanvasPattern
+    ) => {
       ctx.fillStyle = color
       ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(w), Math.ceil(h))
     }
@@ -609,11 +615,7 @@ export default function PixelLakeScene({
         width={480}
         height={320}
         className="w-full h-auto"
-        style={{
-          imageRendering: 'pixelated',
-          imageRendering: '-moz-crisp-edges',
-          imageRendering: 'crisp-edges',
-        }}
+        style={{ imageRendering: 'pixelated' }}
       />
       <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-mono">
         {weather.toUpperCase()}

@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/preserve-manual-memoization */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Droplet, Zap, Wind, AlertTriangle, TrendingUp, Award, Volume2, VolumeX } from 'lucide-react'
+import { Card, CardContent } from './ui/card'
+import { Button } from './ui/button'
+import { Droplet, Zap, Wind, AlertTriangle, TrendingUp, Award, Volume2, VolumeX } from './ui/icons'
 
 interface Resource {
   current: number
@@ -141,7 +142,9 @@ export default function WaterManagerGame() {
   useEffect(() => {
     if (soundEnabled && !audioContextRef.current) {
       try {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
         if (AudioContextClass) {
           audioContextRef.current = new AudioContextClass()
         }

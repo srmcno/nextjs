@@ -13,11 +13,21 @@ import WaterManagerGame from '../../components/WaterManagerGame'
 import LawnWateringWidget from '../../components/LawnWateringWidget'
 import BackToTop from '../../components/BackToTop'
 import { SETTLEMENT_WATER_BODIES, WaterBody } from '../../lib/waterBodies'
+import { useOKCSystem } from '../../lib/useOKCSystem'
+import type { DroughtCondition } from '../../lib/okcReservoirSystem'
+
+const DROUGHT_TO_LAWN_STAGE: Record<DroughtCondition, 'none' | 'stage1' | 'stage2' | 'stage3'> = {
+  none: 'none',
+  moderate: 'stage1',
+  advanced: 'stage2',
+  extreme: 'stage3'
+}
 
 export default function DashboardPage() {
   const allWaterBodies = SETTLEMENT_WATER_BODIES
   const [filteredWaterBodies, setFilteredWaterBodies] = useState<WaterBody[]>(allWaterBodies)
   const [activeTab, setActiveTab] = useState<'monitoring' | 'tools' | 'learn'>('monitoring')
+  const okcSnapshot = useOKCSystem()
 
   const reservoirs = filteredWaterBodies.filter(wb => wb.type === 'reservoir')
   const rivers = filteredWaterBodies.filter(wb => wb.type === 'river')
@@ -112,8 +122,8 @@ export default function DashboardPage() {
 
             {/* OKC System Status - Per Exhibit 13 */}
             <div className="grid gap-6 lg:grid-cols-2 mb-8">
-              <OKCSystemStatus />
-              <DroughtMeter percentage={78.5} hefnerPct={82.3} draperPct={79.1} />
+              <OKCSystemStatus snapshot={okcSnapshot} />
+              <DroughtMeter snapshot={okcSnapshot} />
             </div>
 
             {/* Settlement Map */}
@@ -194,10 +204,10 @@ export default function DashboardPage() {
 
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Lawn Watering Widget */}
-              <LawnWateringWidget droughtStage="none" />
-              
+              <LawnWateringWidget droughtStage={DROUGHT_TO_LAWN_STAGE[okcSnapshot.drought.condition]} />
+
               {/* Drought Meter */}
-              <DroughtMeter percentage={78.5} hefnerPct={82.3} draperPct={79.1} />
+              <DroughtMeter snapshot={okcSnapshot} />
             </div>
 
             {/* WSA Key Numbers */}

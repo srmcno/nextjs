@@ -1,21 +1,31 @@
 'use client'
 
+import { useOKCSystem, type OKCSystemSnapshot } from '../lib/useOKCSystem'
+
 interface DroughtMeterProps {
-  percentage: number
-  hefnerPct: number
-  draperPct: number
+  /** Optional pre-fetched snapshot — otherwise the component fetches its own. */
+  snapshot?: OKCSystemSnapshot
+  /** Override percentages (used for "what if" sliders and docs). */
+  percentage?: number
+  hefnerPct?: number
+  draperPct?: number
 }
 
-export default function DroughtMeter({ percentage, hefnerPct, draperPct }: DroughtMeterProps) {
-  // Determine drought status
-  const allBelowThreshold = (threshold: number) => 
-    percentage < threshold && hefnerPct < threshold && draperPct < threshold
+export default function DroughtMeter({ snapshot, percentage, hefnerPct, draperPct }: DroughtMeterProps) {
+  const ownSnapshot = useOKCSystem()
+  const data = snapshot ?? ownSnapshot
+
+  const system = percentage ?? data.percentage
+  const hefner = hefnerPct ?? data.hefnerPct
+  const draper = draperPct ?? data.draperPct
+
+  const allBelowThreshold = (t: number) => system < t && hefner < t && draper < t
 
   let status: 'normal' | 'moderate' | 'advanced' | 'extreme' = 'normal'
   let statusLabel = 'No Restrictions'
   let statusDescription = 'Water lawns as normal. System operating at healthy levels.'
   let statusColor = 'text-emerald-600'
-  
+
   if (allBelowThreshold(50)) {
     status = 'extreme'
     statusLabel = 'Mandatory Rationing'
@@ -33,10 +43,13 @@ export default function DroughtMeter({ percentage, hefnerPct, draperPct }: Droug
     statusColor = 'text-yellow-600'
   }
 
-  // Calculate rotation for speedometer needle (-135 to 135 degrees = 270 degree range)
-  // Map 0-100% to the range
-  const rotation = -135 + (percentage / 100) * 270
-  
+  // Map 0-100% to -135..135 degrees (270 degree sweep)
+  const rotation = -135 + (Math.max(0, Math.min(100, system)) / 100) * 270
+
+  if (data.loading && percentage === undefined) {
+    return <div className="animate-pulse h-80 bg-slate-100 rounded-2xl" />
+  }
+
   return (
     <div className="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-sm">
       <div className="text-center">
@@ -48,64 +61,18 @@ export default function DroughtMeter({ percentage, hefnerPct, draperPct }: Droug
 
       {/* Speedometer */}
       <div className="relative mx-auto mt-6 h-48 w-64">
-        {/* SVG Gauge */}
         <svg viewBox="0 0 200 120" className="w-full h-full">
-          {/* Background arc */}
-          <path
-            d="M 20 100 A 80 80 0 0 1 180 100"
-            fill="none"
-            stroke="#e2e8f0"
-            strokeWidth="16"
-            strokeLinecap="round"
-          />
-          
-          {/* Colored zones */}
-          {/* Critical (0-50%) */}
-          <path
-            d="M 20 100 A 80 80 0 0 1 55 35"
-            fill="none"
-            stroke="#ef4444"
-            strokeWidth="16"
-            strokeLinecap="round"
-          />
-          {/* Advanced (50-65%) */}
-          <path
-            d="M 55 35 A 80 80 0 0 1 80 23"
-            fill="none"
-            stroke="#f59e0b"
-            strokeWidth="16"
-          />
-          {/* Moderate (65-75%) */}
-          <path
-            d="M 80 23 A 80 80 0 0 1 100 20"
-            fill="none"
-            stroke="#eab308"
-            strokeWidth="16"
-          />
-          {/* Normal (75-100%) */}
-          <path
-            d="M 100 20 A 80 80 0 0 1 180 100"
-            fill="none"
-            stroke="#10b981"
-            strokeWidth="16"
-            strokeLinecap="round"
-          />
+          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#e2e8f0" strokeWidth="16" strokeLinecap="round" />
+          <path d="M 20 100 A 80 80 0 0 1 55 35" fill="none" stroke="#ef4444" strokeWidth="16" strokeLinecap="round" />
+          <path d="M 55 35 A 80 80 0 0 1 80 23" fill="none" stroke="#f59e0b" strokeWidth="16" />
+          <path d="M 80 23 A 80 80 0 0 1 100 20" fill="none" stroke="#eab308" strokeWidth="16" />
+          <path d="M 100 20 A 80 80 0 0 1 180 100" fill="none" stroke="#10b981" strokeWidth="16" strokeLinecap="round" />
 
-          {/* Needle */}
-          <g transform={`rotate(${rotation}, 100, 100)`}>
-            <line
-              x1="100"
-              y1="100"
-              x2="100"
-              y2="35"
-              stroke="#1e293b"
-              strokeWidth="4"
-              strokeLinecap="round"
-            />
+          <g transform={`rotate(${rotation}, 100, 100)`} style={{ transition: 'transform 1s ease-out' }}>
+            <line x1="100" y1="100" x2="100" y2="35" stroke="#1e293b" strokeWidth="4" strokeLinecap="round" />
             <circle cx="100" cy="100" r="8" fill="#1e293b" />
           </g>
 
-          {/* Labels */}
           <text x="15" y="115" className="text-[8px] fill-slate-500 font-bold">0%</text>
           <text x="45" y="40" className="text-[7px] fill-rose-500 font-bold">50%</text>
           <text x="70" y="22" className="text-[7px] fill-amber-500 font-bold">65%</text>
@@ -113,14 +80,13 @@ export default function DroughtMeter({ percentage, hefnerPct, draperPct }: Droug
           <text x="175" y="115" className="text-[8px] fill-slate-500 font-bold">100%</text>
         </svg>
 
-        {/* Center Value */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-          <div className="text-3xl font-black text-slate-900">{percentage.toFixed(0)}%</div>
+          <div className="text-3xl font-black text-slate-900">{system.toFixed(0)}%</div>
           <div className="text-xs font-medium text-slate-500">Combined Storage</div>
         </div>
       </div>
 
-      {/* Status Card */}
+      {/* Status card */}
       <div className={`mt-6 rounded-xl p-4 ${
         status === 'extreme' ? 'bg-rose-50 border border-rose-200' :
         status === 'advanced' ? 'bg-amber-50 border border-amber-200' :
@@ -135,6 +101,22 @@ export default function DroughtMeter({ percentage, hefnerPct, draperPct }: Droug
           <div className="text-3xl">
             {status === 'extreme' ? '🚫' : status === 'advanced' ? '⚠️' : status === 'moderate' ? '📅' : '✅'}
           </div>
+        </div>
+      </div>
+
+      {/* Per-reservoir quick read */}
+      <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px]">
+        <div className="rounded bg-slate-50 p-2">
+          <div className="font-bold text-slate-700">{system.toFixed(0)}%</div>
+          <div className="text-slate-500">System</div>
+        </div>
+        <div className="rounded bg-slate-50 p-2">
+          <div className="font-bold text-slate-700">{hefner.toFixed(0)}%</div>
+          <div className="text-slate-500">Hefner</div>
+        </div>
+        <div className="rounded bg-slate-50 p-2">
+          <div className="font-bold text-slate-700">{draper.toFixed(0)}%</div>
+          <div className="text-slate-500">Draper</div>
         </div>
       </div>
 

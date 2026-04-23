@@ -13,9 +13,17 @@ import {
 } from '../lib/waterBodies'
 
 type Point = { t: string; v: number }
+type DataSource = 'usace-live' | 'usgs-live' | 'mock-demo' | 'unknown'
 
 interface LakeCardProps {
   waterBody: WaterBody
+}
+
+const SOURCE_LABEL: Record<DataSource, { short: string; long: string; dot: string }> = {
+  'usace-live':  { short: 'Live',  long: '✓ USACE Live',  dot: 'bg-emerald-500' },
+  'usgs-live':   { short: 'Live',  long: '✓ USGS Live',   dot: 'bg-emerald-500' },
+  'mock-demo':   { short: 'Demo',  long: '◦ Demo Data',   dot: 'bg-amber-400' },
+  'unknown':     { short: '—',     long: 'No Source',     dot: 'bg-slate-300' }
 }
 
 const ALERT_CONFIG: Record<AlertLevel, { badgeColor: string; borderColor: string; headerBg: string }> = {
@@ -46,7 +54,7 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
   const [err, setErr] = useState<string | null>(null)
   const [latest, setLatest] = useState<Point | null>(null)
   const [series, setSeries] = useState<Point[]>([])
-  const [sourceUsed, setSourceUsed] = useState<'usace' | 'usgs' | null>(null)
+  const [dataSource, setDataSource] = useState<DataSource>('unknown')
 
   const { usgsId, usaceId, parameterCode, usaceParam, conservationPool, streambed, name, type, county } = waterBody
   const isRiver = type === 'river'
@@ -55,63 +63,61 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
     let cancelled = false
 
     const load = async () => {
-      // Set loading state only if not cancelled
       if (!cancelled) {
         setLoading(true)
         setErr(null)
       }
-      
-      let dataFound = false
 
-      // 1. Try USACE API first for Reservoirs
+      // 1. Try USACE API first for reservoirs with a USACE ID
       if (usaceId && usaceParam && !cancelled) {
         try {
-          const res = await fetch(`/api/usace?site=${usaceId}&param=${usaceParam}`)
+          const res = await fetch(`/api/usace?site=${usaceId}&param=${usaceParam}`, { cache: 'no-store' })
           if (res.ok) {
             const json = await res.json()
-            if (json.values && json.values.length > 0) {
-              interface USACEValue { dateTime: string; value: number }
-              const pts = json.values.map((v: USACEValue) => ({ t: v.dateTime, v: Number(v.value) }))
-              if (!cancelled) {
-                setSeries(pts)
-                setLatest(pts[pts.length - 1])
-                setSourceUsed('usace')
-                setLoading(false)
-                dataFound = true
-                return 
-              }
+            interface USACEValue { dateTime: string; value: number }
+            const pts: Point[] = (json.values as USACEValue[] | undefined ?? [])
+              .map((v) => ({ t: v.dateTime, v: Number(v.value) }))
+              .filter((p) => Number.isFinite(p.v))
+
+            if (pts.length > 0 && !cancelled) {
+              const header = res.headers.get('X-Data-Source') as DataSource | null
+              setSeries(pts)
+              setLatest(pts[pts.length - 1])
+              setDataSource(header === 'mock-demo' ? 'mock-demo' : 'usace-live')
+              setLoading(false)
+              return
             }
           }
         } catch {
-          // Silently fall back to USGS
+          // Fall through to USGS
         }
       }
 
-      // 2. Fallback to USGS API (or primary for Rivers)
-      if (!dataFound && !cancelled) {
+      // 2. Fall back to USGS (or primary for rivers)
+      if (!cancelled) {
         try {
-          const res = await fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${parameterCode}`)
+          const res = await fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${parameterCode}`, { cache: 'no-store' })
           const json = await res.json()
-          const values = json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []
-          interface USGSValue { dateTime: string; value: number }
-          const mapped = values.map((v: USGSValue) => ({ t: v.dateTime, v: Number(v.value) }))
-          const pts = mapped.filter((p: Point) => Number.isFinite(p.v))
+          interface USGSValue { dateTime: string; value: number | string }
+          const values: USGSValue[] = json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []
+          const pts: Point[] = values
+            .map((v) => ({ t: v.dateTime, v: Number(v.value) }))
+            .filter((p) => Number.isFinite(p.v))
 
-          if (pts.length > 0) {
-            if (!cancelled) {
-              setSeries(pts)
-              setLatest(pts[pts.length - 1])
-              setSourceUsed('usgs')
-              setLoading(false)
-              dataFound = true
-            }
+          if (pts.length > 0 && !cancelled) {
+            const header = res.headers.get('X-Data-Source') as DataSource | null
+            setSeries(pts)
+            setLatest(pts[pts.length - 1])
+            setDataSource(header === 'mock-demo' ? 'mock-demo' : 'usgs-live')
+            setLoading(false)
+            return
           }
         } catch (error) {
           console.error(`USGS fetch failed for ${name}`, error)
         }
       }
 
-      if (!dataFound && !cancelled) {
+      if (!cancelled) {
         setErr('Data unavailable')
         setLoading(false)
       }
@@ -172,10 +178,21 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
               <span className="text-xl">{isRiver ? '🌊' : '💧'}</span>
               <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-700">{name}</h3>
             </div>
-            <div className="mt-1 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
               <span>{county} County</span>
               <span className="text-slate-300">•</span>
-              <span>{sourceUsed === 'usace' ? `USACE ${usaceId}` : `USGS ${usgsId}`}</span>
+              <span>{dataSource === 'usace-live' && usaceId ? `USACE ${usaceId}` : `USGS ${usgsId}`}</span>
+              {!loading && dataSource !== 'unknown' && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="inline-flex items-center gap-1 normal-case tracking-normal">
+                    <span className={`h-1.5 w-1.5 rounded-full ${SOURCE_LABEL[dataSource].dot}`} />
+                    <span className={dataSource === 'mock-demo' ? 'text-amber-600' : 'text-emerald-600'}>
+                      {SOURCE_LABEL[dataSource].short}
+                    </span>
+                  </span>
+                </>
+              )}
             </div>
           </div>
           <div className="flex flex-col items-end gap-1.5">
@@ -283,28 +300,30 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
 
             {/* FOOTER ACTIONS */}
             <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-               <span className="text-[10px] font-medium text-slate-400">
-                 {sourceUsed === 'usace' ? '✓ USACE Official' : '✓ USGS Proxy'}
+               <span className={`text-[10px] font-medium ${
+                 dataSource === 'mock-demo' ? 'text-amber-600' : 'text-slate-400'
+               }`}>
+                 {SOURCE_LABEL[dataSource].long}
                </span>
                <div className="flex gap-3">
-                 <DataExport 
-                    waterBodyName={name} 
+                 <DataExport
+                    waterBodyName={name}
                     data={series}
-                    usgsId={usgsId} 
-                    conservationPool={conservationPool} 
-                    currentLevel={latest?.v} 
-                    poolPercentage={poolPercentage} 
+                    usgsId={usgsId}
+                    conservationPool={conservationPool}
+                    currentLevel={latest?.v}
+                    poolPercentage={poolPercentage}
                     alertLevel={alertLevel}
                  />
-                 <a 
-                   href={sourceUsed === 'usace' 
-                     ? `https://water.usace.army.mil/overview/swt/locations/${usaceId?.toLowerCase()}` 
+                 <a
+                   href={dataSource === 'usace-live' && usaceId
+                     ? `https://water.usace.army.mil/overview/swt/locations/${usaceId.toLowerCase()}`
                      : `https://waterdata.usgs.gov/monitoring-location/${usgsId}/`}
                    target="_blank"
                    rel="noreferrer"
                    className="text-[11px] font-bold text-sky-600 hover:text-sky-800"
                  >
-                   {sourceUsed === 'usace' ? 'USACE Page ↗' : 'USGS Page ↗'}
+                   {dataSource === 'usace-live' ? 'USACE Page ↗' : 'USGS Page ↗'}
                  </a>
                </div>
             </div>

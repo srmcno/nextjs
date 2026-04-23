@@ -7,49 +7,55 @@ interface DataStatusBannerProps {
   persistent?: boolean
 }
 
+type DataSourceState = 'checking' | 'live' | 'mock' | 'mixed'
+
+// Sample both USGS rivers/lakes and a USACE lake so a single blocked endpoint
+// doesn't flip the whole banner.
+const SAMPLE_REQUESTS: Array<{ endpoint: string; live: string }> = [
+  { endpoint: '/api/usgs?site=07335775&param=62614', live: 'usgs-live' },  // Sardis (USGS)
+  { endpoint: '/api/usgs?site=07336200&param=00060', live: 'usgs-live' },  // Kiamichi at Antlers (USGS)
+  { endpoint: '/api/usace?site=CYDO2&param=Elev', live: 'usace-live' }     // Sardis (USACE)
+]
+
 export default function DataStatusBanner({ persistent = false }: DataStatusBannerProps) {
   const [dismissed, setDismissed] = useState(() => {
-    // Initialize dismissed state from localStorage
     if (typeof window !== 'undefined' && !persistent) {
-      const wasDismissed = localStorage.getItem('data-status-banner-dismissed')
-      return wasDismissed === 'true'
+      return localStorage.getItem('data-status-banner-dismissed') === 'true'
     }
     return false
   })
-  const [dataSource, setDataSource] = useState<'checking' | 'live' | 'mock' | 'mixed'>('checking')
+  const [dataSource, setDataSource] = useState<DataSourceState>('checking')
 
   useEffect(() => {
-    // Check a sample of water bodies to see if we're getting live or mock data
+    let cancelled = false
+
     const checkDataSources = async () => {
-      try {
-        const sampleSites = ['07335775', '07336000', '07337900'] // Sardis, Hugo, Broken Bow
-        const results = await Promise.all(
-          sampleSites.map(async (site) => {
-            try {
-              const res = await fetch(`/api/usgs?site=${site}&param=62614`)
-              return res.headers.get('X-Data-Source')
-            } catch {
-              return 'mock-demo'
-            }
-          })
-        )
+      const results = await Promise.all(
+        SAMPLE_REQUESTS.map(async ({ endpoint, live }) => {
+          try {
+            const res = await fetch(endpoint, { cache: 'no-store' })
+            const header = res.headers.get('X-Data-Source') ?? ''
+            if (header === live) return 'live' as const
+            if (header === 'mock-demo') return 'mock' as const
+            return 'mock' as const
+          } catch {
+            return 'mock' as const
+          }
+        })
+      )
 
-        const liveCount = results.filter(r => r === 'usgs-live').length
-        const mockCount = results.filter(r => r === 'mock-demo').length
+      if (cancelled) return
 
-        if (liveCount === results.length) {
-          setDataSource('live')
-        } else if (mockCount === results.length) {
-          setDataSource('mock')
-        } else {
-          setDataSource('mixed')
-        }
-      } catch {
-        setDataSource('mock')
-      }
+      const liveCount = results.filter((r) => r === 'live').length
+      if (liveCount === results.length) setDataSource('live')
+      else if (liveCount === 0) setDataSource('mock')
+      else setDataSource('mixed')
     }
 
     void checkDataSources()
+    return () => {
+      cancelled = true
+    }
   }, [persistent])
 
   const handleDismiss = () => {
@@ -63,6 +69,8 @@ export default function DataStatusBanner({ persistent = false }: DataStatusBanne
     return null
   }
 
+  const isMock = dataSource === 'mock'
+
   return (
     <div className="border-b-2 border-choctaw-sealYellow bg-gradient-to-r from-choctaw-sealYellow/5 to-choctaw-sealYellow/10">
       <div className="mx-auto max-w-7xl px-4 py-3">
@@ -75,20 +83,18 @@ export default function DataStatusBanner({ persistent = false }: DataStatusBanne
             </div>
             <div className="flex-1">
               <div className="font-bold text-choctaw-brown">
-                {dataSource === 'mock' && 'Demo Data Mode'}
-                {dataSource === 'mixed' && 'Partial Live Data'}
+                {isMock ? 'Demo Data Mode' : 'Partial Live Data'}
               </div>
               <div className="mt-1 text-sm text-choctaw-brown/80">
-                {dataSource === 'mock' && (
+                {isMock ? (
                   <>
-                    You&apos;re viewing simulated data for demonstration purposes. The USGS live data service is currently unavailable.
-                    All water levels and flows shown are realistic simulations based on typical patterns for each water body.
+                    Live USACE and USGS feeds are unreachable from this environment. All charts below use
+                    realistic demo data generated from typical patterns so the dashboard stays functional.
                   </>
-                )}
-                {dataSource === 'mixed' && (
+                ) : (
                   <>
-                    Some water bodies are showing live USGS data while others are using simulated data due to connectivity issues.
-                    Check individual cards for their data source.
+                    Some water bodies are showing live agency data while others are falling back to demo
+                    data due to connectivity. Check the source badge on each card.
                   </>
                 )}
               </div>
