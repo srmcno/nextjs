@@ -12,7 +12,7 @@ interface DroughtMeterProps {
 }
 
 export default function DroughtMeter({ snapshot, percentage, hefnerPct, draperPct }: DroughtMeterProps) {
-  const ownSnapshot = useOKCSystem()
+  const ownSnapshot = useOKCSystem({ enabled: !snapshot })
   const data = snapshot ?? ownSnapshot
 
   const system = percentage ?? data.percentage

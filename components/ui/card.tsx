@@ -1,8 +1,5 @@
 import type { HTMLAttributes } from 'react'
-
-function cn(...parts: Array<string | undefined>) {
-  return parts.filter(Boolean).join(' ')
-}
+import { cn } from './utils'
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (

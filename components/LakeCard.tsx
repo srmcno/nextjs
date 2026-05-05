@@ -97,6 +97,14 @@ export default function LakeCard({ waterBody }: LakeCardProps) {
       if (!cancelled) {
         try {
           const res = await fetch(`/api/usgs?site=${encodeURIComponent(usgsId)}&param=${parameterCode}`, { cache: 'no-store' })
+          if (!res.ok) {
+            // Mirror USACE branch: skip parsing on error responses and fall through.
+            if (!cancelled) {
+              setErr('Data unavailable')
+              setLoading(false)
+            }
+            return
+          }
           const json = await res.json()
           interface USGSValue { dateTime: string; value: number | string }
           const values: USGSValue[] = json?.value?.timeSeries?.[0]?.values?.[0]?.value ?? []

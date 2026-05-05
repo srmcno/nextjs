@@ -1,8 +1,8 @@
-import type { SVGProps } from 'react'
+import type { SVGProps, ReactNode } from 'react'
 
 type IconProps = SVGProps<SVGSVGElement>
 
-function Icon({ children, ...props }: IconProps & { children: React.ReactNode }) {
+function Icon({ children, ...props }: IconProps & { children: ReactNode }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

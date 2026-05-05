@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   OKC_RESERVOIR_SYSTEM,
   calculateCombinedStorage,
@@ -19,7 +19,8 @@ async function fetchLatestElevation(usgsId: string, usaceId?: string): Promise<n
         const d = await r.json()
         const values: USACEValue[] | undefined = d.values
         if (values && values.length) {
-          return Number(values[values.length - 1].value)
+          const latest = Number(values[values.length - 1].value)
+          if (Number.isFinite(latest)) return latest
         }
       }
     } catch {
@@ -54,11 +55,19 @@ export interface OKCSystemSnapshot {
   sardisRule: ReturnType<typeof getSardisRestriction>
 }
 
-export function useOKCSystem(): OKCSystemSnapshot {
+interface UseOKCSystemOptions {
+  /** When false, the hook performs no network requests and returns an empty snapshot.
+   *  Pass `false` from components that already receive a snapshot via props. */
+  enabled?: boolean
+}
+
+export function useOKCSystem({ enabled = true }: UseOKCSystemOptions = {}): OKCSystemSnapshot {
   const [elevations, setElevations] = useState<Map<string, number>>(new Map())
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(enabled)
 
   useEffect(() => {
+    if (!enabled) return
+
     let cancelled = false
 
     const load = async () => {
@@ -83,23 +92,28 @@ export function useOKCSystem(): OKCSystemSnapshot {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [enabled])
 
-  const { totalStorage, percentage, details } = calculateCombinedStorage(elevations)
-  const hefnerPct = details.find((d) => d.id === 'hefner')?.percentFull ?? 100
-  const draperPct = details.find((d) => d.id === 'draper')?.percentFull ?? 100
-  const drought = determineWSADroughtCondition(percentage, hefnerPct, draperPct)
-  const sardisRule = getSardisRestriction(drought.condition)
+  // Defaults are 0 (not 100) so missing data fails *toward* drought, never away from it.
+  // The WSA Section 6 trigger requires all three indicators below threshold; if any reading
+  // is missing, treating it as 100 would falsely suppress a drought declaration.
+  return useMemo<OKCSystemSnapshot>(() => {
+    const { totalStorage, percentage, details } = calculateCombinedStorage(elevations)
+    const hefnerPct = details.find((d) => d.id === 'hefner')?.percentFull ?? 0
+    const draperPct = details.find((d) => d.id === 'draper')?.percentFull ?? 0
+    const drought = determineWSADroughtCondition(percentage, hefnerPct, draperPct)
+    const sardisRule = getSardisRestriction(drought.condition)
 
-  return {
-    loading,
-    elevations,
-    totalStorage,
-    percentage,
-    details,
-    hefnerPct,
-    draperPct,
-    drought,
-    sardisRule
-  }
+    return {
+      loading,
+      elevations,
+      totalStorage,
+      percentage,
+      details,
+      hefnerPct,
+      draperPct,
+      drought,
+      sardisRule
+    }
+  }, [elevations, loading])
 }

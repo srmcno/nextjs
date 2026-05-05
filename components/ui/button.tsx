@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react'
+import { cn } from './utils'
 
 type Variant = 'default' | 'outline' | 'ghost'
 type Size = 'sm' | 'md' | 'icon'
@@ -20,10 +21,6 @@ const SIZE_CLASSES: Record<Size, string> = {
   icon: 'h-8 w-8 p-0 text-sm'
 }
 
-function cn(...parts: Array<string | undefined>) {
-  return parts.filter(Boolean).join(' ')
-}
-
 export function Button({
   variant = 'default',
   size = 'md',
@@ -33,7 +30,9 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:cursor-not-allowed',
+        // outline-hidden (vs outline-none) preserves a transparent outline that
+        // remains visible in forced-colors / High Contrast mode.
+        'inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:cursor-not-allowed',
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         className

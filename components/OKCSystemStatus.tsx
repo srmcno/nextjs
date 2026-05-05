@@ -10,7 +10,7 @@ interface OKCSystemStatusProps {
 }
 
 export default function OKCSystemStatus({ snapshot }: OKCSystemStatusProps) {
-  const ownSnapshot = useOKCSystem()
+  const ownSnapshot = useOKCSystem({ enabled: !snapshot })
   const data = snapshot ?? ownSnapshot
   const [showDetails, setShowDetails] = useState(false)
 

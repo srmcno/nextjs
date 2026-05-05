@@ -84,48 +84,58 @@ export async function GET(request: Request) {
   const start = new Date()
   start.setDate(start.getDate() - 7)
 
-  for (const pattern of ID_PATTERNS) {
-    const tsId = pattern(site, param)
-    const url = `${BASE_URL}?office=SWT&name=${encodeURIComponent(tsId)}&begin=${start.toISOString()}&end=${end.toISOString()}&page-size=500`
-
-    try {
-      const res = await fetchWithRetry(url, {
-        headers: { Accept: 'application/json;version=2' },
-        next: { revalidate: 300 }
-      })
-
-      if (!res.ok) continue
-
-      const data = await res.json()
-      if (data.values && data.values.length > 0) {
-        interface USACETimeSeriesValue {
-          0: number
-          1: number | null
-        }
-        const cleanValues = (data.values as USACETimeSeriesValue[])
-          .filter((v) => v[1] !== null)
-          .map((v) => ({
-            dateTime: new Date(v[0]).toISOString(),
-            value: v[1] as number
-          }))
-
-        if (cleanValues.length > 0) {
-          return NextResponse.json(
-            { source: 'usace', tsId, site, param, values: cleanValues },
-            {
-              headers: {
-                'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-                'X-Data-Source': 'usace-live',
-                'X-Site-ID': site
-              }
-            }
-          )
-        }
-      }
-    } catch (e) {
-      console.error(`USACE fetch failed for ${tsId}:`, e)
-    }
+  interface USACETimeSeriesValue {
+    0: number
+    1: number | null
+  }
+  interface PatternHit {
+    tsId: string
+    cleanValues: { dateTime: string; value: number }[]
   }
 
-  return mockResponse(site, param, 'not-found')
+  // Race the timeseries-ID patterns in parallel. The first pattern to return
+  // a non-empty payload wins; the rest are abandoned. This bounds total
+  // latency to a single fetch's worth of timeout instead of stacking 4×.
+  const tryPattern = async (tsId: string): Promise<PatternHit> => {
+    const url = `${BASE_URL}?office=SWT&name=${encodeURIComponent(tsId)}&begin=${start.toISOString()}&end=${end.toISOString()}&page-size=500`
+    const res = await fetchWithRetry(url, {
+      headers: { Accept: 'application/json;version=2' },
+      next: { revalidate: 300 }
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${tsId}`)
+
+    const data = await res.json()
+    const raw = data?.values as USACETimeSeriesValue[] | undefined
+    if (!raw || raw.length === 0) throw new Error(`empty values for ${tsId}`)
+
+    const cleanValues = raw
+      .filter((v) => v[1] !== null && Number.isFinite(v[1] as number))
+      .map((v) => ({
+        dateTime: new Date(v[0]).toISOString(),
+        value: v[1] as number
+      }))
+
+    if (cleanValues.length === 0) throw new Error(`no finite values for ${tsId}`)
+    return { tsId, cleanValues }
+  }
+
+  try {
+    const hit = await Promise.any(
+      ID_PATTERNS.map((pattern) => tryPattern(pattern(site, param)))
+    )
+
+    return NextResponse.json(
+      { source: 'usace', tsId: hit.tsId, site, param, values: hit.cleanValues },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+          'X-Data-Source': 'usace-live',
+          'X-Site-ID': site
+        }
+      }
+    )
+  } catch {
+    // All patterns failed (Promise.any rejects with AggregateError) — fall back to mock.
+    return mockResponse(site, param, 'not-found')
+  }
 }
